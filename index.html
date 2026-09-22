@@ -188,6 +188,21 @@
   .seg-btn.on { background: var(--surface); color: var(--text); border: 1px solid var(--line); }
   .login-err { color: var(--danger); min-height: 18px; margin-bottom: 8px; }
   .acct { word-break: break-all; margin-bottom: 2px; }
+  .name-note { border: 1px solid var(--accent-dim); background: rgba(212,169,62,.08); border-radius: 9px; padding: 11px 13px; font-size: 13px; line-height: 1.55; margin-bottom: 14px; }
+  .name-note strong:first-child { color: var(--accent); }
+  .guide { max-width: 760px; }
+  .guide h1 { font-family: var(--font-display); font-size: 24px; margin: 4px 0 10px; }
+  .guide h2 { font-size: 18px; margin: 30px 0 10px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .guide h3 { font-size: 15px; margin: 18px 0 6px; }
+  .guide p, .guide li { font-size: 14.5px; line-height: 1.65; max-width: 68ch; }
+  .guide p { margin: 0 0 10px; }
+  .guide ul, .guide ol { margin: 0 0 12px; padding-left: 22px; }
+  .guide li { margin-bottom: 6px; }
+  .guide .lead { font-size: 15.5px; color: var(--muted); }
+  .guide .note { border-left: 3px solid var(--accent); background: var(--surface-2); padding: 10px 13px; border-radius: 0 8px 8px 0; }
+  .guide .formula { font-family: var(--font-display); font-weight: 600; font-size: 16px; color: var(--accent); background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 12px 14px; }
+  nav#tabs button.tab.guide-tab { margin-top: 10px; border-top: 1px solid var(--line); border-radius: 0 0 8px 8px; padding-top: 12px; }
+  @media (max-width: 780px) { nav#tabs button.tab.guide-tab { margin-top: 0; border-top: none; border-radius: 8px; padding-top: 10px; } }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px; }
   .chip { padding: 5px 11px; border-radius: 999px; font-size: 12.5px; font-weight: 600; background: transparent; }
   .chip.on { background: var(--accent); color: #14200f; border-color: var(--accent); }
@@ -364,6 +379,48 @@ async function startCloud(){
   });
 }
 
+function hasPasswordLogin(){
+  const u = window.firebase && firebase.auth && firebase.auth().currentUser;
+  return !!(u && (u.providerData || []).some(p => p.providerId === 'password'));
+}
+function openPasswordModal(){
+  const user = firebase.auth().currentUser;
+  if (!user || !user.email) { toast('Bu hesaba şifre eklenemiyor.'); return; }
+  const had = hasPasswordLogin();
+  const overlay = el(`<div class="overlay"></div>`);
+  const modal = el(`<div class="modal" style="max-width:420px;">
+    <h3>${had ? 'Şifreyi değiştir' : 'Şifre belirle'}</h3>
+    <p class="sub" style="margin-top:-6px;">${had ? '' : 'Google girişinin çalışmadığı cihazlarda (örneğin telefonda) '}<strong class="em-t"></strong> adresi ve bu şifreyle "Giriş yap" diyerek aynı hesaba girebilirsin.</p>
+    <div class="field"><label>Yeni şifre (en az 6 karakter)</label><input class="p1" type="password" autocomplete="new-password"></div>
+    <div class="field"><label>Yeni şifre (tekrar)</label><input class="p2" type="password" autocomplete="new-password"></div>
+    <div class="login-err small" role="alert"></div>
+    <div class="row"><button class="cancel" style="flex:1;">Vazgeç</button><button class="primary go" style="flex:1;">Kaydet</button></div>
+  </div>`);
+  modal.querySelector('.em-t').textContent = user.email;
+  overlay.appendChild(modal); document.body.appendChild(overlay);
+  const err = modal.querySelector('.login-err');
+  modal.querySelector('.p1').focus();
+  modal.querySelector('.cancel').onclick = () => overlay.remove();
+  modal.querySelector('.go').onclick = async () => {
+    const p1 = modal.querySelector('.p1').value, p2 = modal.querySelector('.p2').value;
+    if (p1.length < 6) { err.textContent = 'Şifre en az 6 karakter olmalı.'; return; }
+    if (p1 !== p2) { err.textContent = 'Şifreler aynı değil.'; return; }
+    const go = modal.querySelector('.go'); go.disabled = true; err.textContent = '';
+    try {
+      if (hasPasswordLogin()) await user.updatePassword(p1);
+      else await user.linkWithCredential(firebase.auth.EmailAuthProvider.credential(user.email, p1));
+      overlay.remove();
+      render();
+      toast(`Şifre kaydedildi. Telefonda ${user.email} ve bu şifreyle giriş yapabilirsin.`);
+    } catch(e) {
+      go.disabled = false;
+      if (e && e.code === 'auth/requires-recent-login') err.textContent = 'Güvenlik için çıkış yapıp tekrar giriş yap, sonra hemen yeniden dene.';
+      else if (e && (e.code === 'auth/email-already-in-use' || e.code === 'auth/credential-already-in-use')) err.textContent = 'Bu e-postayla ayrı bir şifreli hesap zaten var. O hesaba "Şifremi unuttum" ile girip verileri yedekle taşıyabilirsin.';
+      else err.textContent = authErrorText(e);
+    }
+  };
+}
+
 async function localLeagues(){
   if (!localDb) return [];
   const sn = await localDb.collection('leagues').get();
@@ -393,6 +450,7 @@ async function loadAndRender(){
   if (lastId && state.leagues.find(l => l.id === lastId)) state.current = await loadLeague(lastId);
   else if (state.leagues.length) state.current = await loadLeague(state.leagues[0].id);
   else state.current = null;
+  try { if (!localStorage.getItem('cetele_guide_seen')) { state.tab = 'kilavuz'; localStorage.setItem('cetele_guide_seen', '1'); } } catch(e){}
   recompute();
   render();
 }
@@ -413,6 +471,7 @@ function renderLogin(){
       <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
       Google ile devam et
     </button>
+    ${window.matchMedia && window.matchMedia('(pointer: coarse)').matches ? `<p class="small muted" style="margin:10px 0 0;line-height:1.45;">Telefonda Google girişi hata verirse: bilgisayarda Google ile gir, sol menüden "Şifre belirle"ye bas. Sonra burada Gmail adresin ve o şifreyle "Giriş yap".</p>` : ''}
     <div class="login-or">ya da e-posta ile</div>
     <div class="seg">
       <button class="seg-btn on" data-m="signin">Giriş yap</button>
@@ -575,17 +634,34 @@ function newLeague(name){
 }
 
 // ---------- calculation engine ----------
+// Team names are matched ignoring case and extra spaces ("kara  kartal" = "Kara Kartal")
+function canonName(lg, name){
+  const n = normName(name);
+  if (!n) return null;
+  const t = (lg.teams || []).find(x => normName(x) === n);
+  if (t) return t;
+  const m = lg.marketName || 'Computer';
+  return normName(m) === n ? m : null;
+}
+function unknownTransferNames(lg){
+  const counts = new Map();
+  (lg.transfers || []).forEach(tr => [tr.from, tr.to].forEach(nm => {
+    if (canonName(lg, nm) === null) { const k = String(nm).trim(); counts.set(k, (counts.get(k) || 0) + 1); }
+  }));
+  return counts;
+}
 function computeLeague(lg){
   const teams = lg.teams || [];
   const ledger = {}; teams.forEach(t => ledger[t] = []);
   teams.forEach(t => ledger[t].push({ type: 'baslangic', label: 'Başlangıç bütçesi', amount: lg.startingBudget }));
 
   (lg.transfers || []).forEach(tr => {
-    if (teams.includes(tr.to)) {
-      ledger[tr.to].push({ type: 'alis', label: `${tr.player} (${tr.from}'den alış)`, amount: -Math.abs(tr.amount) });
+    const to = canonName(lg, tr.to), from = canonName(lg, tr.from);
+    if (to && ledger[to]) {
+      ledger[to].push({ type: 'alis', label: `${tr.player} (${tr.from}'den alış)`, amount: -Math.abs(tr.amount) });
     }
-    if (teams.includes(tr.from)) {
-      ledger[tr.from].push({ type: 'satis', label: `${tr.player} (${tr.to}'a satış)`, amount: Math.abs(tr.amount) });
+    if (from && ledger[from]) {
+      ledger[from].push({ type: 'satis', label: `${tr.player} (${tr.to}'a satış)`, amount: Math.abs(tr.amount) });
     }
   });
 
@@ -822,8 +898,13 @@ function onGlobalPaste(e){
 
 // ---------- feedback (stored privately; only the app owner can read) ----------
 async function openFeedbackModal(){
-  const uidv = userCap ? await userCap.id().catch(() => null) : null;
-  if (!uidv) { toast('Geri bildirim bu görünümde gönderilemiyor.'); return; }
+  let uidv = null;
+  if (cloud.available) {
+    if (!cloud.user) { toast('Geri bildirim göndermek için giriş yap.'); return; }
+  } else {
+    uidv = userCap ? await userCap.id().catch(() => null) : null;
+    if (!uidv) { toast('Geri bildirim bu görünümde gönderilemiyor.'); return; }
+  }
   const overlay = el(`<div class="overlay"></div>`);
   const modal = el(`
     <div class="modal" style="max-width:480px;">
@@ -832,7 +913,7 @@ async function openFeedbackModal(){
       <div class="field"><label>Konu</label>
         <select id="fb-cat"><option value="hata">Hata bildirimi</option><option value="oneri">Öneri / yeni özellik</option><option value="diger">Diğer</option></select>
       </div>
-      <div class="field"><label>Mesaj</label><textarea id="fb-text" rows="5" maxlength="2000" placeholder="Ne oldu, ne bekliyordun?"></textarea></div>
+      <div class="field"><label>Mesaj</label><textarea id="fb-text" rows="5" maxlength="2000" placeholder="Neyi yapamıyorsun? Neyi yapabilmek isterdin?"></textarea></div>
       <div class="row">
         <button id="fb-cancel" style="flex:1;">Vazgeç</button>
         <button id="fb-send" class="primary" style="flex:1;">Gönder</button>
@@ -848,6 +929,20 @@ async function openFeedbackModal(){
     if (!text) { toast('Mesaj boş olamaz.'); return; }
     const btn = modal.querySelector('#fb-send');
     btn.disabled = true;
+    if (cloud.available) {
+      cloud.fs.collection('feedback').add({
+        uid: cloud.user.uid,
+        email: cloud.user.email || '',
+        cat: modal.querySelector('#fb-cat').value,
+        text: text.slice(0, 2000),
+        league: state.current ? state.current.name : '',
+        at: nowIso(),
+        device: navigator.userAgent.slice(0, 200)
+      }).catch(e => { console.error(e); toast(e && e.code === 'permission-denied' ? 'Geri bildirim gönderilemedi: Firestore kuralları güncel değil.' : 'Geri bildirim gönderilemedi, tekrar dene.'); });
+      overlay.remove();
+      toast('Geri bildirimin gönderildi, teşekkürler.');
+      return;
+    }
     try {
       const ref = db.doc('feedback/' + uidv);
       const snap = await ref.get();
@@ -926,7 +1021,7 @@ const TABS = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'kadro', label: 'Kadro Değerleri' },
   { id: 'transferler', label: 'Transferler' },
-  { id: 'puanlar', label: 'Puanlar' },
+  { id: 'puanlar', label: 'Puan Bonusu' },
   { id: 'siralama', label: 'Sıralama Bonusu' },
 ];
 
@@ -967,13 +1062,16 @@ function renderNav(){
     <div id="tablist">
       ${state.current ? TABS.map(t => `<button class="tab ${state.tab===t.id?'active':''}" data-tab="${t.id}">${t.label}</button>`).join('') : ''}
       ${isOwner ? `<button class="tab ${state.tab==='inbox'?'active':''}" data-tab="inbox">Gelen geri bildirimler</button>` : ''}
+      <button class="tab guide-tab ${state.tab==='kilavuz'?'active':''}" data-tab="kilavuz">📖 Kullanma Kılavuzu</button>
     </div>
     ${cloud.available ? (cloud.user
-      ? `<div class="nav-foot"><div class="small muted acct" title="Giriş yapılan hesap"></div><button id="logout-btn" class="ghost small" style="padding-left:0;color:var(--muted);">Çıkış yap</button></div>`
+      ? `<div class="nav-foot"><div class="small muted acct" title="Giriş yapılan hesap"></div><button id="pw-btn" class="ghost small" style="padding-left:0;color:var(--muted);display:block;">${hasPasswordLogin() ? 'Şifreyi değiştir' : 'Şifre belirle (telefon girişi için)'}</button><button id="logout-btn" class="ghost small" style="padding-left:0;color:var(--muted);">Çıkış yap</button></div>`
       : `<div class="nav-foot"><div class="small muted" style="margin-bottom:6px;">Kayıtlar sadece bu cihazda</div><button id="login-btn" style="width:100%;">Giriş yap / üye ol</button></div>`) : ''}
-    ${db && userCap ? `<div class="nav-foot"><button id="feedback-btn" class="ghost" style="width:100%;text-align:left;color:var(--muted);">✉ Geri bildirim gönder</button></div>` : ''}
+    ${(db && userCap) || cloud.available ? `<div class="nav-foot"><button id="feedback-btn" class="ghost" style="width:100%;text-align:left;color:var(--muted);">✉ Geri bildirim gönder</button></div>` : ''}
   `;
   nav.querySelector('#new-league-btn').onclick = onNewLeague;
+  const pwb = nav.querySelector('#pw-btn');
+  if (pwb) pwb.onclick = openPasswordModal;
   const acct = nav.querySelector('.acct');
   if (acct && cloud.user) acct.textContent = cloud.user.email || cloud.user.displayName || 'Hesabın';
   const lo = nav.querySelector('#logout-btn');
@@ -1011,6 +1109,7 @@ async function onNewLeague(){
 }
 
 function renderTab(){
+  if (state.tab === 'kilavuz') return renderGuide();
   if (!db) return el(`<div class="card"><h2>Depolama kullanılamıyor</h2><p class="sub">Tarayıcı veri saklamaya izin vermiyor. Gizli/özel sekmede açtıysan normal bir sekmede açmayı dene.</p></div>`);
   if (state.tab === 'inbox' && isOwner) return renderInbox();
   if (!state.current) {
@@ -1025,6 +1124,91 @@ function renderTab(){
     case 'dashboard': return renderDashboard();
     default: return document.createElement('div');
   }
+}
+
+
+function renderGuide(){
+  const wrap = el(`<article class="card guide">
+<h1>ÇETELE Kullanma Kılavuzu</h1>
+<p class="lead">ÇETELE, Comunio liginde rakiplerinin bütçesini takip etmeni ve bir oyuncu için kimin en fazla ne kadar teklif verebileceğini görmeni sağlar. Kayıtların sadece sana aittir, ligdeki diğer oyuncular dahil kimse göremez.</p>
+
+<h2>1. Başlarken</h2>
+<p><strong>Giriş yap.</strong> Google hesabınla ya da e-posta ve şifreyle giriş yap. Böylece kayıtların telefonda ve bilgisayarda aynı olur. Giriş yapmadan da kullanabilirsin, ama o zaman kayıtlar sadece o cihazda kalır.</p>
+<p class="note">Telefonda Google girişi hata verirse: bilgisayarda Google ile gir, sol menüden "Şifre belirle"ye bas. Sonra telefonda Gmail adresin ve o şifreyle giriş yap.</p>
+<p><strong>Ligini oluştur.</strong> Sol menüden <strong>+ Yeni Lig</strong>'e bas, ligine bir ad ver.</p>
+<p><strong>Lig Kurulumu'nu doldur:</strong></p>
+<ul>
+<li><strong>Takımlar:</strong> Ligdeki tüm takımları, kendin dahil ekle. Adları Comunio'dan kopyalayıp yapıştır. Adlar oyundakinden farklı yazılırsa o takımın transferleri bütçesine yansımaz.</li>
+<li><strong>Market hesabının adı:</strong> Oyunda transfer bildirimlerinde görünen bilgisayar hesabının adı (genelde "Computer").</li>
+<li><strong>Başlangıç bütçesi:</strong> Sezon başında herkese verilen bütçe.</li>
+<li><strong>Eksi bütçe kuralı:</strong> Liginde takımlar kadro değerinin %25'ine kadar eksiye düşebiliyorsa onu, hiç düşemiyorsa diğerini seç.</li>
+</ul>
+
+<h2>2. Sezon ortasında başlıyorsan: geçmişi gir</h2>
+<p>Bütçe hesabının doğru olması için sezon başından bu yana olan her şeyin girilmesi gerekir. Bu ilk seferlik bir iş, sonrasında sadece yeni hareketleri eklersin.</p>
+<ol>
+<li><strong>Transferler:</strong> Comunio'daki tüm transfer haberlerini kopyalayıp yapıştır. Tek bir eksik transfer, o takımın bütçesini yanlış gösterir.</li>
+<li><strong>Puan Bonusu:</strong> Her haftanın puanlarını gir. Sadece güncel toplam puanları biliyorsan "Toplam puan" seçeneğiyle tek seferde girebilirsin.</li>
+<li><strong>Sıralama Bonusu:</strong> Liginde lig yöneticisinin verdiği haftalık bonus varsa, bonus tablosunu ve geçmiş haftaların sıralamalarını gir.</li>
+<li><strong>Kadro Değerleri:</strong> Tüm takımların güncel kadro değerini gir.</li>
+</ol>
+<p class="note"><strong>Kontrol et:</strong> Dashboard'da kendi takımının bütçesine bak ve oyundaki bütçenle karşılaştır. İkisi aynıysa kayıtların doğru demektir. Farklıysa eksik ya da iki kez girilmiş bir transfer, puan ya da bonus vardır. Aynı yöntem sonraki haftalarda da en iyi kontrol yolundur.</p>
+
+<h2>3. Haftalık rutin</h2>
+<ul>
+<li><strong>Transferler oldukça:</strong> Yeni transfer haberlerini yapıştır.</li>
+<li><strong>Hafta bitince:</strong> Haftanın puanlarını ve varsa sıralama bonusunu gir.</li>
+<li><strong>Teklif vermeden önce:</strong> Kadro değerlerini güncelle, sonra Dashboard'da rakiplerinin maksimum teklifine bak.</li>
+</ul>
+
+<h2>4. Sekmeler</h2>
+<h3>Dashboard</h3>
+<p>Her takımın güncel bütçesi, kadro değeri ve maksimum teklifi. Bir takıma dokunursan sezon başından bu yana tüm bütçe hareketlerini görürsün. Eksi bütçedeki takımlar ve güncel olmayan kadro değerleri için uyarılar burada çıkar. Tüm hareketleri Excel'de açılabilen bir dosya olarak da indirebilirsin.</p>
+<h3>Kadro Değerleri</h3>
+<p>Takımların kadro değerlerini gir. Değerler oyunda sürekli değiştiği için teklif vermeden önce güncellemeyi alışkanlık yap.</p>
+<h3>Transferler</h3>
+<p>Metni yapıştırıp <strong>Metni ayrıştır</strong>'a bas. Kaydetmeden önce bir önizleme tablosu çıkar, rakamları kontrol et, gerekirse düzelt. Daha önce girilmiş bir transfer "olası mükerrer" olarak işaretlenir ve kaydedilmez.</p>
+<ul>
+<li>Tablodaki sütun başlıklarına dokunarak sıralayabilir ve Excel'deki gibi filtreleyebilirsin.</li>
+<li>Üstteki takım düğmelerinden birini seçersen o takımın tüm alış ve satışları listelenir, toplam bedel de görünür.</li>
+<li>Takım listende olmayan bir ad geçerse üstte uyarı çıkar, oradan o adı doğru takıma bağlayabilirsin.</li>
+</ul>
+<h3>Puan Bonusu</h3>
+<p>Oyunda her puan için 10.000 bütçe eklenir. Tabloya tüm takımların puanını gir. "Bu haftanın puanı" seçersen puan toplama eklenir. "Toplam puan" seçersen sadece önceki kayıttan farkı işlenir, çift sayılmaz.</p>
+<h3>Sıralama Bonusu</h3>
+<p>Oyunun kuralı değildir. Bazı liglerde lig yöneticisi haftalık sıralamaya göre ek para dağıtır. Liginde böyle bir şey varsa bu sekmeyi aç, bonus tablosunu gir, her hafta takımları sürükleyerek sırala.</p>
+<h3>Lig Kurulumu</h3>
+<p>Takım ekleme, adını değiştirme (✎) ve silme, lig kuralları, yedekleme ve ligi silme.</p>
+
+<h2>5. Maksimum teklif nasıl hesaplanır?</h2>
+<p class="formula">Maksimum teklif = mevcut bütçe + kadro değerinin %25'i</p>
+<p>Örnek: Bir takımın bütçesi 5.000.000, kadro değeri 80.000.000 ise, bu takım 5.000.000 + 20.000.000 = en fazla <strong>25.000.000</strong> teklif verebilir. Ligin "hiç eksiye düşemez" kuralını kullanıyorsa maksimum teklif sadece mevcut bütçesidir.</p>
+<p><strong>Dikkat edilmesi gerekenler:</strong></p>
+<ul>
+<li>Rakip bir oyuncusunu <strong>başka bir takıma</strong> satarsa parası hemen gelir, maksimum teklifi o an artar. Computer'a yaptığı satışlar ise ertesi gün işlenir.</li>
+<li>Kadro değerleri güncel değilse hesap da yanlış olur.</li>
+</ul>
+
+<h2>6. Önemli hatırlatmalar</h2>
+<ul>
+<li><strong>Eksi bütçe:</strong> Haftanın ilk maçı başladığında bütçesi eksi olan takım o hafta 0 puan alır. Dashboard'da eksi bütçedeki takımlar kırmızıyla işaretlenir.</li>
+<li><strong>Yedek al:</strong> Lig Kurulumu → Yedekleme → <strong>Yedek indir</strong>. Özellikle büyük değişikliklerden önce.</li>
+<li><strong>Aynı anda iki cihazda düzenleme yapma:</strong> Son kaydedilen geçerli olur, diğer cihazdaki değişiklik kaybolabilir.</li>
+</ul>
+
+<h2>7. Sık sorulan sorular</h2>
+<h3>Dashboard'daki bütçem oyundakiyle tutmuyor.</h3>
+<p>Eksik ya da iki kez girilmiş bir transfer, eksik haftalık puan ya da bonus olabilir. Transferler sekmesinde kendi takımını seçip listeyi oyundaki haberlerle karşılaştır.</p>
+<h3>Yanlış bir transfer girdim.</h3>
+<p>Transferler tablosunda satırın sonundaki ✕ ile sil, sonra doğrusunu gir.</p>
+<h3>Ligdeki diğer oyuncular kayıtlarımı görebilir mi?</h3>
+<p>Hayır. Kayıtların sadece senin hesabında durur.</p>
+<h3>Bir oyuncu takımının adını değiştirdi.</h3>
+<p>Lig Kurulumu'nda o takımın yanındaki ✎'e bas, yeni adı yaz. Geçmiş kayıtların hepsi yeni ada geçer.</p>
+<h3>Bir hata buldum ya da bir önerim var.</h3>
+<p>Sol menünün altındaki <strong>Geri bildirim gönder</strong>'e bas. Mesajın doğrudan geliştiriciye ulaşır.</p>
+</article>`);
+  return wrap;
 }
 
 // ---------- KURULUM ----------
@@ -1060,6 +1244,12 @@ function renderKurulum(){
     <div class="card">
       <h2>Takımlar</h2>
       <div class="sub">Ligdeki tüm takımların gerçek isimleri (market/bot hesabı hariç)</div>
+      <div class="name-note">
+        <strong>⚠ Takım adlarını oyundakiyle aynı yaz.</strong> Transferler, oyundan kopyaladığın metindeki takım adlarına göre eşleştirilir.
+        En güvenlisi adları Comunio'daki sıralama ekranından <strong>kopyalayıp yapıştırmak</strong>.
+        Büyük/küçük harf ve fazladan boşluk fark etmez, ama yazım farkı (örneğin "Kara Kartal" ile "KaraKartal" ya da "Yıldız FC" ile "Yildiz FC" gibi Türkçe karakter farkları) farklı takım sayılır ve o transferler bütçeye yansımaz.
+        Böyle bir durumda Transferler sekmesinde uyarı çıkar. Bir oyuncu takımının adını oyunda değiştirirse buradan ✎ ile adını güncelle.
+      </div>
       <div id="team-list"></div>
       <div class="row" style="margin-top:10px;">
         <input id="new-team" placeholder="Takım adı ekle...">
@@ -1074,9 +1264,18 @@ function renderKurulum(){
     lg.teams.forEach((t, i) => {
       const row = el(`<div class="row" style="margin-bottom:6px;align-items:center;">
         <div style="flex:3;">${escapeHtml(t)}</div>
-        <button class="icon-btn" style="flex:0 0 auto;" title="Sil">✕</button>
+        <button class="icon-btn ren" style="flex:0 0 auto;" title="Adını değiştir">✎</button>
+        <button class="icon-btn del" style="flex:0 0 auto;" title="Sil">✕</button>
       </div>`);
-      row.querySelector('button').onclick = async () => {
+      row.querySelector('.ren').onclick = async () => {
+        const nn = await showPrompt(`"${t}" için yeni ad (geçmiş kayıtlar da güncellenir):`, t);
+        if (!nn || nn === t) return;
+        if (lg.teams.some((x, j) => j !== i && normName(x) === normName(nn))) { toast('Bu adda bir takım zaten var.'); return; }
+        renameTeam(lg, t, nn);
+        await persist();
+        toast(`"${t}" artık "${nn}".`);
+      };
+      row.querySelector('.del').onclick = async () => {
         const ok = await showConfirm(`"${t}" takımını silmek istediğine emin misin? Bu takıma ait geçmiş veriler ledger'da kalır ama hesaplamalarda görünmez.`);
         if (!ok) return;
         lg.teams.splice(i, 1);
@@ -1109,6 +1308,21 @@ function renderKurulum(){
   wrap.appendChild(renderBackupCard());
   wrap.appendChild(renderDeleteLeagueCard(lg));
   return wrap;
+}
+
+function renameTeam(lg, oldName, newName){
+  const n = normName(oldName);
+  lg.teams = lg.teams.map(x => x === oldName ? newName : x);
+  (lg.transfers || []).forEach(tr => {
+    if (normName(tr.from) === n) tr.from = newName;
+    if (normName(tr.to) === n) tr.to = newName;
+  });
+  (lg.pointsLog || []).forEach(p => { if (p.team === oldName) p.team = newName; });
+  (lg.adminBonusLog || []).forEach(e => { e.ranking = (e.ranking || []).map(x => x === oldName ? newName : x); });
+  if (lg.squadValues && lg.squadValues[oldName]) { lg.squadValues[newName] = lg.squadValues[oldName]; delete lg.squadValues[oldName]; }
+  const v = state.trView;
+  v.teams = v.teams.map(x => x === oldName ? newName : x);
+  ['player', 'from', 'to'].forEach(c => { if (v.filters[c]) v.filters[c] = v.filters[c].map(x => x === oldName ? newName : x); });
 }
 
 function renderDeleteLeagueCard(lg){
@@ -1248,7 +1462,7 @@ function renderTransferler(){
       <div class="intake"></div>
       <div class="field" style="margin-top:14px;">
         <label>${sampleFn ? 'ya da transfer metnini yapıştır' : 'Transfer metni'} (İngilizce ya da Türkçe format)</label>
-        <textarea id="paste-area" rows="4" placeholder="Marco Asensio transfers for 60,000,000 from Computer to Ayucukk."></textarea>
+        <textarea id="paste-area" rows="4" placeholder="Marco Asensio transfers for 60,000,000 from Computer to Kara Kartal."></textarea>
       </div>
       <button id="parse-text-btn">Metni ayrıştır</button>
     </div>
@@ -1269,6 +1483,36 @@ function renderTransferler(){
       <div id="transfer-table"></div>
     </div>
   `);
+  const unknown = unknownTransferNames(lg);
+  if (unknown.size) {
+    const warn = el(`<div class="card danger-card">
+      <h2>Eşleşmeyen takım adları</h2>
+      <div class="sub">Aşağıdaki adlar takım listende yok, bu yüzden geçtikleri transferler bütçeye yansımıyor. Yazım farkıysa ya da takım adını değiştirdiyse doğru takıma bağla.</div>
+      <div class="unk-list"></div>
+    </div>`);
+    const list = warn.querySelector('.unk-list');
+    [...unknown.entries()].forEach(([nm, cnt]) => {
+      const row = el(`<div class="row" style="align-items:center;margin-bottom:8px;">
+        <div style="flex:2;min-width:160px;"><strong></strong> <span class="small muted">(${cnt} transfer)</span></div>
+        <select style="flex:2;"><option value="">— takım seç —</option>${lg.teams.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}</select>
+        <button style="flex:0 0 auto;">Bağla</button>
+      </div>`);
+      row.querySelector('strong').textContent = nm;
+      row.querySelector('button').onclick = async () => {
+        const target = row.querySelector('select').value;
+        if (!target) { toast('Önce bir takım seç.'); return; }
+        const n = normName(nm);
+        lg.transfers.forEach(tr => {
+          if (normName(tr.from) === n) tr.from = target;
+          if (normName(tr.to) === n) tr.to = target;
+        });
+        await persist();
+        toast(`"${nm}" adı ${target} takımına bağlandı.`);
+      };
+      list.appendChild(row);
+    });
+    wrap.appendChild(warn);
+  }
   wrap.appendChild(listCard);
   renderTransferTable(listCard.querySelector('#transfer-table'));
   return wrap;
@@ -1511,7 +1755,7 @@ Her satır iki formattan birinde olabilir:
 Yalnızca şu JSON dizisini döndür, başka metin yazma:
 [{"player": "...", "amount": 1234567, "from": "...", "to": "..."}]
 - amount tam sayı olmalı (nokta/virgül ayraçları kaldırılmış). Rakamları çok dikkatli oku.
-- from ve to: takım/hesap adlarını Türkçe ekler olmadan, görseldeki gibi birebir yaz ("Sikici Hamsi'a" → "Sikici Hamsi").
+- from ve to: takım/hesap adlarını Türkçe ekler olmadan, görseldeki gibi birebir yaz ("Kara Kartal'a" → "Kara Kartal").
 - Hiç transfer satırı yoksa [] döndür.`;
     const data = await sampleFn.json(prompt, { images: files });
     const arr = Array.isArray(data) ? data : (data && Array.isArray(data.transfers) ? data.transfers : []);
@@ -1767,6 +2011,13 @@ function openPreviewModal(parsedRows){
       playerI.oninput = () => rows[i].player = playerI.value;
       fromI.oninput = () => rows[i].from = fromI.value;
       toI.oninput = () => rows[i].to = toI.value;
+      fromI.onchange = toI.onchange = () => renderRows();
+      [[fromI, r.from], [toI, r.to]].forEach(([inp, nm]) => {
+        if (canonName(lg, nm) === null) {
+          inp.style.borderColor = 'var(--danger)';
+          inp.parentElement.appendChild(el(`<div class="small neg">takım listesinde yok</div>`));
+        }
+      });
       amtI.oninput = () => rows[i].amount = parseAmount(amtI.value);
       tr.querySelector('button').onclick = () => { rows.splice(i,1); renderRows(); };
       if (r._dup) {
@@ -1782,9 +2033,17 @@ function openPreviewModal(parsedRows){
   modal.querySelector('#confirm-preview').onclick = async () => {
     const toAdd = rows.filter(r => r._include && r.player && r.from && r.to && !isNaN(r.amount));
     if (!toAdd.length) { toast('Kaydedilecek satır seçilmedi.'); return; }
+    const unknown = [...new Set(toAdd.flatMap(r => [r.from, r.to]).filter(nm => canonName(lg, nm) === null).map(nm => nm.trim()))];
+    if (unknown.length) {
+      const ok = await showConfirm(`Şu adlar takım listesinde yok: ${unknown.join(', ')}. Bu adların geçtiği transferler bütçeye yansımaz (yazım farkı olabilir). Yine de kaydedilsin mi?`, 'Yine de kaydet', false);
+      if (!ok) return;
+    }
     lg.transfers = lg.transfers || [];
-    toAdd.forEach(r => {
-      lg.transfers.push({ id: uid(), player: r.player.trim(), amount: Math.abs(r.amount), from: r.from.trim(), to: r.to.trim(), addedAt: nowIso() });
+    const base = Date.now();
+    toAdd.forEach((r, i) => {
+      const from = canonName(lg, r.from) || r.from.trim();
+      const to = canonName(lg, r.to) || r.to.trim();
+      lg.transfers.push({ id: uid(), player: r.player.trim(), amount: Math.abs(r.amount), from, to, addedAt: new Date(base + i).toISOString() });
     });
     overlay.remove();
     await persist();
