@@ -203,6 +203,12 @@
   .guide .formula { font-family: var(--font-display); font-weight: 600; font-size: 16px; color: var(--accent); background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 12px 14px; }
   nav#tabs button.tab.guide-tab { margin-top: 10px; border-top: 1px solid var(--line); border-radius: 0 0 8px 8px; padding-top: 12px; }
   @media (max-width: 780px) { nav#tabs button.tab.guide-tab { margin-top: 0; border-top: none; border-radius: 8px; padding-top: 10px; } }
+  .acct-box { background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; }
+  .method { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .acct-note { font-size: 13px; line-height: 1.55; border-left: 3px solid var(--accent); background: var(--surface-2); padding: 9px 12px; border-radius: 0 8px 8px 0; margin: 14px 0 0; }
+  .browser-tip { margin-top: 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 10px 13px; font-size: 13px; line-height: 1.55; }
+  .browser-tip ul { margin: 6px 0 6px; padding-left: 18px; }
+  .browser-tip li { margin-bottom: 4px; }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px; }
   .chip { padding: 5px 11px; border-radius: 999px; font-size: 12.5px; font-weight: 600; background: transparent; }
   .chip.on { background: var(--accent); color: #14200f; border-color: var(--accent); }
@@ -383,39 +389,70 @@ function hasPasswordLogin(){
   const u = window.firebase && firebase.auth && firebase.auth().currentUser;
   return !!(u && (u.providerData || []).some(p => p.providerId === 'password'));
 }
-function openPasswordModal(){
+function hasGoogleLogin(){
+  const u = window.firebase && firebase.auth && firebase.auth().currentUser;
+  return !!(u && (u.providerData || []).some(p => p.providerId === 'google.com'));
+}
+function openAccountModal(){
   const user = firebase.auth().currentUser;
-  if (!user || !user.email) { toast('Bu hesaba şifre eklenemiyor.'); return; }
-  const had = hasPasswordLogin();
+  if (!user) return;
+  const google = hasGoogleLogin();
+  const hasPw = hasPasswordLogin();
   const overlay = el(`<div class="overlay"></div>`);
-  const modal = el(`<div class="modal" style="max-width:420px;">
-    <h3>${had ? 'Şifreyi değiştir' : 'Şifre belirle'}</h3>
-    <p class="sub" style="margin-top:-6px;">${had ? '' : 'Google girişinin çalışmadığı cihazlarda (örneğin telefonda) '}<strong class="em-t"></strong> adresi ve bu şifreyle "Giriş yap" diyerek aynı hesaba girebilirsin.</p>
-    <div class="field"><label>Yeni şifre (en az 6 karakter)</label><input class="p1" type="password" autocomplete="new-password"></div>
-    <div class="field"><label>Yeni şifre (tekrar)</label><input class="p2" type="password" autocomplete="new-password"></div>
-    <div class="login-err small" role="alert"></div>
-    <div class="row"><button class="cancel" style="flex:1;">Vazgeç</button><button class="primary go" style="flex:1;">Kaydet</button></div>
+  const modal = el(`<div class="modal" style="max-width:460px;">
+    <h3>Hesap ayarları</h3>
+    <div class="acct-box">
+      <div class="small muted">Giriş yaptığın hesap</div>
+      <div class="em-t" style="font-weight:600;word-break:break-all;"></div>
+    </div>
+    <div class="small muted" style="margin:14px 0 6px;">ÇETELE'ye giriş yöntemlerin</div>
+    <div class="method"><span>Google ile giriş</span><span class="pill ${google ? 'ok' : 'warn'}">${google ? 'Açık' : 'Kapalı'}</span></div>
+    <div class="method"><span>E-posta + ÇETELE şifresi</span><span class="pill ${hasPw ? 'ok' : 'warn'}">${hasPw ? 'Açık' : 'Kapalı'}</span></div>
+    ${google ? `<p class="acct-note"><strong>ÇETELE şifresi, Gmail şifren değildir.</strong> Gmail hesabın ve şifren bundan etkilenmez. Bu şifre sadece Google girişinin çalışmadığı cihazlarda (örneğin bazı telefonlarda) ÇETELE'ye e-posta adresin ve bu şifreyle girmek için kullanılır.</p>` : ''}
+    <div class="pw-section" ${hasPw ? 'hidden' : ''}>
+      <h4 style="margin:14px 0 8px;">${hasPw ? 'ÇETELE şifresini değiştir' : 'ÇETELE şifresi oluştur'}</h4>
+      <div class="field"><label>Yeni ÇETELE şifresi (en az 6 karakter)</label><input class="p1" type="password" autocomplete="new-password"></div>
+      <div class="field"><label>Yeni ÇETELE şifresi (tekrar)</label><input class="p2" type="password" autocomplete="new-password"></div>
+      <div class="login-err small" role="alert"></div>
+    </div>
+    <div class="browser-tip">
+      <strong>Telefonda hangi tarayıcı?</strong>
+      <ul>
+        <li><strong>iPhone:</strong> Safari. Paylaş → Ana Ekrana Ekle ile uygulama gibi aç. Google girişi hata verirse e-posta adresin ve ÇETELE şifrenle gir.</li>
+        <li><strong>Android:</strong> Chrome. ⋮ → Ana ekrana ekle. Google girişi genelde sorunsuz çalışır.</li>
+      </ul>
+      <div class="small muted">Bir cihazda bir kez giriş yaptıktan sonra, çıkış yapmadığın sürece tekrar şifre sorulmaz.</div>
+    </div>
+    <div class="row" style="margin-top:12px;">
+      <button class="cancel" style="flex:1;">Kapat</button>
+      ${hasPw ? '<button class="open-pw" style="flex:1;">ÇETELE şifresini değiştir</button>' : ''}
+      <button class="primary go" style="flex:1;" ${hasPw ? 'hidden' : ''}>Şifreyi kaydet</button>
+    </div>
   </div>`);
-  modal.querySelector('.em-t').textContent = user.email;
+  modal.querySelector('.em-t').textContent = user.email || user.displayName || '';
   overlay.appendChild(modal); document.body.appendChild(overlay);
   const err = modal.querySelector('.login-err');
-  modal.querySelector('.p1').focus();
+  const go = modal.querySelector('.go');
   modal.querySelector('.cancel').onclick = () => overlay.remove();
-  modal.querySelector('.go').onclick = async () => {
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  const openPw = modal.querySelector('.open-pw');
+  if (openPw) openPw.onclick = () => { modal.querySelector('.pw-section').hidden = false; openPw.hidden = true; go.hidden = false; modal.querySelector('.p1').focus(); };
+  go.onclick = async () => {
     const p1 = modal.querySelector('.p1').value, p2 = modal.querySelector('.p2').value;
     if (p1.length < 6) { err.textContent = 'Şifre en az 6 karakter olmalı.'; return; }
     if (p1 !== p2) { err.textContent = 'Şifreler aynı değil.'; return; }
-    const go = modal.querySelector('.go'); go.disabled = true; err.textContent = '';
+    if (!user.email) { err.textContent = 'Bu hesaba şifre eklenemiyor.'; return; }
+    go.disabled = true; err.textContent = '';
     try {
       if (hasPasswordLogin()) await user.updatePassword(p1);
       else await user.linkWithCredential(firebase.auth.EmailAuthProvider.credential(user.email, p1));
       overlay.remove();
       render();
-      toast(`Şifre kaydedildi. Telefonda ${user.email} ve bu şifreyle giriş yapabilirsin.`);
+      toast(`ÇETELE şifren kaydedildi. Başka bir cihazda ${user.email} ve bu şifreyle giriş yapabilirsin.`);
     } catch(e) {
       go.disabled = false;
       if (e && e.code === 'auth/requires-recent-login') err.textContent = 'Güvenlik için çıkış yapıp tekrar giriş yap, sonra hemen yeniden dene.';
-      else if (e && (e.code === 'auth/email-already-in-use' || e.code === 'auth/credential-already-in-use')) err.textContent = 'Bu e-postayla ayrı bir şifreli hesap zaten var. O hesaba "Şifremi unuttum" ile girip verileri yedekle taşıyabilirsin.';
+      else if (e && (e.code === 'auth/email-already-in-use' || e.code === 'auth/credential-already-in-use')) err.textContent = 'Bu e-postayla ayrı bir şifreli ÇETELE hesabı zaten var. Geliştiriciye geri bildirim gönder, birleştirmene yardım edelim.';
       else err.textContent = authErrorText(e);
     }
   };
@@ -471,7 +508,7 @@ function renderLogin(){
       <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
       Google ile devam et
     </button>
-    ${window.matchMedia && window.matchMedia('(pointer: coarse)').matches ? `<p class="small muted" style="margin:10px 0 0;line-height:1.45;">Telefonda Google girişi hata verirse: bilgisayarda Google ile gir, sol menüden "Şifre belirle"ye bas. Sonra burada Gmail adresin ve o şifreyle "Giriş yap".</p>` : ''}
+    ${window.matchMedia && window.matchMedia('(pointer: coarse)').matches ? `<p class="small muted" style="margin:10px 0 0;line-height:1.45;">Telefonda Google girişi hata verirse e-posta ile üye ol ya da giriş yap. Daha önce Google ile hesap açtıysan önce bilgisayarda sol menüdeki "Hesap ayarları"ndan bir ÇETELE şifresi oluştur, sonra burada Gmail adresin ve o şifreyle "Giriş yap". En sorunsuz tarayıcılar: iPhone'da Safari, Android'de Chrome.</p>` : ''}
     <div class="login-or">ya da e-posta ile</div>
     <div class="seg">
       <button class="seg-btn on" data-m="signin">Giriş yap</button>
@@ -1065,13 +1102,13 @@ function renderNav(){
       <button class="tab guide-tab ${state.tab==='kilavuz'?'active':''}" data-tab="kilavuz">📖 Kullanma Kılavuzu</button>
     </div>
     ${cloud.available ? (cloud.user
-      ? `<div class="nav-foot"><div class="small muted acct" title="Giriş yapılan hesap"></div><button id="pw-btn" class="ghost small" style="padding-left:0;color:var(--muted);display:block;">${hasPasswordLogin() ? 'Şifreyi değiştir' : 'Şifre belirle (telefon girişi için)'}</button><button id="logout-btn" class="ghost small" style="padding-left:0;color:var(--muted);">Çıkış yap</button></div>`
+      ? `<div class="nav-foot"><div class="small muted">Hesabın</div><div class="small acct"></div><button id="acct-btn" class="ghost small" style="padding-left:0;color:var(--muted);display:block;">⚙ Hesap ayarları</button><button id="logout-btn" class="ghost small" style="padding-left:0;color:var(--muted);">Çıkış yap</button></div>`
       : `<div class="nav-foot"><div class="small muted" style="margin-bottom:6px;">Kayıtlar sadece bu cihazda</div><button id="login-btn" style="width:100%;">Giriş yap / üye ol</button></div>`) : ''}
     ${(db && userCap) || cloud.available ? `<div class="nav-foot"><button id="feedback-btn" class="ghost" style="width:100%;text-align:left;color:var(--muted);">✉ Geri bildirim gönder</button></div>` : ''}
   `;
   nav.querySelector('#new-league-btn').onclick = onNewLeague;
-  const pwb = nav.querySelector('#pw-btn');
-  if (pwb) pwb.onclick = openPasswordModal;
+  const ab = nav.querySelector('#acct-btn');
+  if (ab) ab.onclick = openAccountModal;
   const acct = nav.querySelector('.acct');
   if (acct && cloud.user) acct.textContent = cloud.user.email || cloud.user.displayName || 'Hesabın';
   const lo = nav.querySelector('#logout-btn');
@@ -1134,7 +1171,14 @@ function renderGuide(){
 
 <h2>1. Başlarken</h2>
 <p><strong>Giriş yap.</strong> Google hesabınla ya da e-posta ve şifreyle giriş yap. Böylece kayıtların telefonda ve bilgisayarda aynı olur. Giriş yapmadan da kullanabilirsin, ama o zaman kayıtlar sadece o cihazda kalır.</p>
-<p class="note">Telefonda Google girişi hata verirse: bilgisayarda Google ile gir, sol menüden "Şifre belirle"ye bas. Sonra telefonda Gmail adresin ve o şifreyle giriş yap.</p>
+<p class="note">Telefonda Google girişi hata verirse <strong>e-posta ile üye ol ya da giriş yap</strong>. Daha önce Google ile hesap açtıysan: önce bilgisayarda Google ile gir, sol menüdeki <strong>Hesap ayarları</strong>'ndan bir <strong>ÇETELE şifresi</strong> oluştur, sonra telefonda Gmail adresin ve bu şifreyle giriş yap. ÇETELE şifresi Gmail şifrenden ayrıdır, Gmail hesabını etkilemez. Bir cihazda bir kez giriş yaptıktan sonra, çıkış yapmadığın sürece tekrar şifre sorulmaz.</p>
+<h3>Telefonda kullanım</h3>
+<ul>
+<li><strong>iPhone:</strong> Safari ile aç. Alttaki <strong>Paylaş</strong> düğmesi → <strong>Ana Ekrana Ekle</strong> ile uygulama gibi kullan. iPhone'da Google girişi hata verebilir; bu durumda e-posta adresin ve ÇETELE şifrenle giriş yap.</li>
+<li><strong>Android:</strong> Chrome ile aç. Sağ üstteki <strong>⋮</strong> → <strong>Ana ekrana ekle</strong>. Google girişi genelde sorunsuz çalışır.</li>
+<li><strong>Huawei telefon ve tabletler:</strong> Google servisleri olmayan Huawei cihazlarda Firefox kullan, e-posta adresin ve ÇETELE şifrenle giriş yap. Firefox ayarlarında "Çıkışta tarama verilerini sil" kapalı olsun, yoksa her kapatışta oturumun kapanır.</li>
+<li>Ana ekrana eklediysen uygulamayı hep oradan aç.</li>
+</ul>
 <p><strong>Ligini oluştur.</strong> Sol menüden <strong>+ Yeni Lig</strong>'e bas, ligine bir ad ver.</p>
 <p><strong>Lig Kurulumu'nu doldur:</strong></p>
 <ul>
@@ -1205,6 +1249,10 @@ function renderGuide(){
 <p>Hayır. Kayıtların sadece senin hesabında durur.</p>
 <h3>Bir oyuncu takımının adını değiştirdi.</h3>
 <p>Lig Kurulumu'nda o takımın yanındaki ✎'e bas, yeni adı yaz. Geçmiş kayıtların hepsi yeni ada geçer.</p>
+<h3>Uygulama açılırken şifre sormuyor.</h3>
+<p>Normal. Bir cihazda bir kez giriş yaptıktan sonra, sol menüden <strong>Çıkış yap</strong> demediğin sürece oturumun açık kalır.</p>
+<h3>ÇETELE şifresi Gmail şifremi değiştirir mi?</h3>
+<p>Hayır. ÇETELE şifresi sadece bu uygulamaya giriş içindir. Gmail hesabın ve şifren bundan hiç etkilenmez.</p>
 <h3>Bir hata buldum ya da bir önerim var.</h3>
 <p>Sol menünün altındaki <strong>Geri bildirim gönder</strong>'e bas. Mesajın doğrudan geliştiriciye ulaşır.</p>
 </article>`);
@@ -1247,7 +1295,7 @@ function renderKurulum(){
       <div class="name-note">
         <strong>⚠ Takım adlarını oyundakiyle aynı yaz.</strong> Transferler, oyundan kopyaladığın metindeki takım adlarına göre eşleştirilir.
         En güvenlisi adları Comunio'daki sıralama ekranından <strong>kopyalayıp yapıştırmak</strong>.
-        Büyük/küçük harf ve fazladan boşluk fark etmez, ama yazım farkı (örneğin "Kara Kartal" ile "KaraKartal" ya da "Yıldız FC" ile "Yildiz FC" gibi Türkçe karakter farkları) farklı takım sayılır ve o transferler bütçeye yansımaz.
+        Büyük/küçük harf farkı ve fazladan boşluklar (örneğin kelimeler arasında çift boşluk) sorun olmaz. Ama yazım farkı olursa farklı takım sayılır ve o transferler bütçeye yansımaz: kelimelerin bitişik yazılması ("Kara Kartal" ile "KaraKartal") ya da bir harfin farklı olması ("Yıldız FC" ile "Yildiz FC") gibi.
         Böyle bir durumda Transferler sekmesinde uyarı çıkar. Bir oyuncu takımının adını oyunda değiştirirse buradan ✎ ile adını güncelle.
       </div>
       <div id="team-list"></div>
