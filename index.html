@@ -176,6 +176,18 @@
   .fb-text { white-space: pre-wrap; font-size: 14px; line-height: 1.5; }
   .danger-card { border-color: var(--danger); }
   .danger-card h2 { color: var(--danger); }
+  .login-wrap { min-height: 100vh; min-height: 100dvh; width: 100%; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+  .login-card { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 26px 24px; }
+  .login-brand { font-family: var(--font-display); font-weight: 700; font-size: 24px; letter-spacing: .04em; display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .login-brand .mark { color: var(--accent); width: 30px; height: 30px; }
+  .google-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: #fff; color: #1f1f1f; border-color: #dadce0; padding: 11px 14px; }
+  .google-btn:hover { background: #f4f6f4; border-color: #c4c7c5; }
+  .login-or { text-align: center; color: var(--muted); font-size: 12.5px; margin: 16px 0 12px; }
+  .seg { display: flex; gap: 4px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 3px; margin-bottom: 14px; }
+  .seg-btn { flex: 1; background: transparent; border: none; padding: 7px; color: var(--muted); }
+  .seg-btn.on { background: var(--surface); color: var(--text); border: 1px solid var(--line); }
+  .login-err { color: var(--danger); min-height: 18px; margin-bottom: 8px; }
+  .acct { word-break: break-all; margin-bottom: 2px; }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px; }
   .chip { padding: 5px 11px; border-radius: 999px; font-size: 12.5px; font-weight: 600; background: transparent; }
   .chip.on { background: var(--accent); color: #14200f; border-color: var(--accent); }
@@ -235,6 +247,257 @@ function toast(msg){
 // ---------- capabilities ----------
 let db = null, sampleFn = null, downloadsCap = null, imgLimits = null, userCap = null, isOwner = false;
 let isLocal = false;
+let localDb = null;
+const BRAND_SVG = `<svg class="mark" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><circle cx="12" cy="12" r="10.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 6.4l4.9 3.6-1.9 5.8H9l-1.9-5.8z" fill="currentColor"/><path d="M12 6.4V1.8M16.9 10l4.4-1.4M15 15.8l2.7 3.8M9 15.8l-2.7 3.8M7.1 10L2.7 8.6" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M9.9 11.6h4.2M12 9.5v4.2" stroke="var(--surface)" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+
+// ---------- Firebase (cloud sync; only when running outside Claude) ----------
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBw_sU_uQcAqQ9MFh0TqTjOqjzx4bQQc6k",
+  authDomain: "cetele-a5d42.firebaseapp.com",
+  projectId: "cetele-a5d42",
+  storageBucket: "cetele-a5d42.firebasestorage.app",
+  messagingSenderId: "400866658436",
+  appId: "1:400866658436:web:ccb102c56f464a38479ad1"
+};
+const FIREBASE_VERSION = '10.12.2';
+const cloud = { available: false, user: null, fs: null };
+let isCloud = false;
+
+function loadScript(src){
+  return new Promise((resolve, reject) => {
+    const sc = document.createElement('script');
+    sc.src = src; sc.async = false;
+    const t = setTimeout(() => reject(new Error('timeout')), 15000);
+    sc.onload = () => { clearTimeout(t); resolve(); };
+    sc.onerror = () => { clearTimeout(t); reject(new Error('load failed')); };
+    document.head.appendChild(sc);
+  });
+}
+async function loadFirebase(){
+  if (window.firebase && window.firebase.auth && window.firebase.firestore) return;
+  const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/`;
+  await loadScript(base + 'firebase-app-compat.js');
+  await Promise.all([loadScript(base + 'firebase-auth-compat.js'), loadScript(base + 'firebase-firestore-compat.js')]);
+}
+function authErrorText(e){
+  const map = {
+    'auth/invalid-email': 'E-posta adresi geçersiz.',
+    'auth/missing-password': 'Şifre gir.',
+    'auth/user-not-found': 'E-posta ya da şifre hatalı.',
+    'auth/wrong-password': 'E-posta ya da şifre hatalı.',
+    'auth/invalid-credential': 'E-posta ya da şifre hatalı.',
+    'auth/invalid-login-credentials': 'E-posta ya da şifre hatalı.',
+    'auth/email-already-in-use': 'Bu e-posta ile zaten bir hesap var. Giriş yapmayı dene.',
+    'auth/weak-password': 'Şifre en az 6 karakter olmalı.',
+    'auth/too-many-requests': 'Çok fazla deneme yapıldı, biraz bekleyip tekrar dene.',
+    'auth/network-request-failed': 'İnternet bağlantısı yok gibi görünüyor.',
+    'auth/popup-blocked': 'Tarayıcı Google giriş penceresini engelledi. E-posta ile giriş yapabilirsin.',
+    'auth/operation-not-supported-in-this-environment': 'Google girişi bu tarayıcıda açılamıyor. E-posta ile giriş yapabilirsin.',
+    'auth/unauthorized-domain': 'Bu site adresi Firebase\'de izinli değil. Firebase → Authentication → Settings → Authorized domains bölümüne bu adresi ekle.',
+    'auth/operation-not-allowed': 'Bu giriş yöntemi Firebase\'de açık değil. Firebase → Authentication → Sign-in method bölümünden aç.'
+  };
+  return map[e && e.code] || ('Giriş yapılamadı' + (e && e.code ? ' (' + e.code + ')' : '') + '.');
+}
+function cloudErrorText(e){
+  if (e && e.code === 'permission-denied') return 'Buluta kaydedilemedi: Firestore güvenlik kuralları eksik ya da hatalı.';
+  return 'Buluta kaydedilemedi' + (e && e.code ? ' (' + e.code + ')' : '') + '.';
+}
+function makeCloudDb(fs, uid){
+  const base = fs.collection('users').doc(uid);
+  const clean = b => JSON.parse(JSON.stringify(b));
+  return {
+    doc(path){
+      const [col, id] = path.split('/');
+      const ref = base.collection(col).doc(id);
+      return {
+        get: async () => { const sn = await ref.get(); return { id, exists: sn.exists, data: () => sn.exists ? sn.data() : undefined }; },
+        // not awaited: the local cache applies the write at once, the server catches up (also offline)
+        set: async (body) => { ref.set(clean(body)).catch(e => { console.error(e); toast(cloudErrorText(e)); }); },
+        delete: async () => { ref.delete().catch(e => { console.error(e); toast(cloudErrorText(e)); }); }
+      };
+    },
+    collection(col){
+      return { get: async () => {
+        const q = await base.collection(col).get();
+        const docs = q.docs.map(d => ({ id: d.id, exists: true, data: () => d.data() }));
+        return { docs, size: docs.length, empty: !docs.length };
+      } };
+    }
+  };
+}
+function isGuest(){ try { return localStorage.getItem('cetele_guest') === '1'; } catch(e){ return false; } }
+function setGuest(v){ try { v ? localStorage.setItem('cetele_guest', '1') : localStorage.removeItem('cetele_guest'); } catch(e){} }
+
+async function startCloud(){
+  renderSplash();
+  try {
+    await loadFirebase();
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    cloud.fs = firebase.firestore();
+    try { await cloud.fs.enablePersistence({ synchronizeTabs: true }); } catch(e){ /* not critical */ }
+    firebase.auth().languageCode = 'tr';
+    cloud.available = true;
+  } catch(e) {
+    console.error(e);
+    cloud.available = false;
+    await loadAndRender();
+    toast('Bulut bağlantısı kurulamadı, bu cihazdaki verilerle devam ediliyor.');
+    return;
+  }
+  firebase.auth().onAuthStateChanged(async (user) => {
+    cloud.user = user || null;
+    state.current = null;
+    if (user) {
+      setGuest(false);
+      isCloud = true;
+      db = makeCloudDb(cloud.fs, user.uid);
+      state.screen = 'app';
+      try { await loadAndRender(); }
+      catch(e){ console.error(e); toast(cloudErrorText(e)); state.leagues = []; recompute(); render(); }
+      maybeOfferMigration(user);
+    } else {
+      isCloud = false;
+      db = localDb;
+      if (isGuest()) { state.screen = 'app'; await loadAndRender(); }
+      else { state.screen = 'login'; render(); }
+    }
+  });
+}
+
+async function localLeagues(){
+  if (!localDb) return [];
+  const sn = await localDb.collection('leagues').get();
+  return sn.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+async function migrateLocalToCloud(){
+  const locals = await localLeagues();
+  for (const l of locals) { const { id, ...body } = l; await db.doc('leagues/' + id).set(body); }
+  return locals.length;
+}
+async function maybeOfferMigration(user){
+  const key = 'cetele_migrated_' + user.uid;
+  try { if (localStorage.getItem(key)) return; } catch(e){ return; }
+  const locals = await localLeagues();
+  if (!locals.length) { try { localStorage.setItem(key, '1'); } catch(e){} return; }
+  const ok = await showConfirm(`Bu cihazda daha önce girdiğin ${locals.length} lig var (${locals.map(l => l.name).join(', ')}). Hesabına aktarılsın mı? Hesabında aynı lig varsa üzerine yazılır.`, 'Hesabıma aktar', false);
+  try { localStorage.setItem(key, '1'); } catch(e){}
+  if (!ok) return;
+  const n = await migrateLocalToCloud();
+  await loadAndRender();
+  toast(`${n} lig hesabına aktarıldı.`);
+}
+
+async function loadAndRender(){
+  state.leagues = await listLeagues();
+  const lastId = getLastLeagueId();
+  if (lastId && state.leagues.find(l => l.id === lastId)) state.current = await loadLeague(lastId);
+  else if (state.leagues.length) state.current = await loadLeague(state.leagues[0].id);
+  else state.current = null;
+  recompute();
+  render();
+}
+
+function renderSplash(){
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  app.appendChild(el(`<div class="login-wrap"><div class="login-card" style="text-align:center;">
+    <div class="login-brand">${BRAND_SVG}ÇETELE</div><div class="spinner"></div></div></div>`));
+}
+
+function renderLogin(){
+  let mode = 'signin';
+  const wrap = el(`<div class="login-wrap"><div class="login-card">
+    <div class="login-brand">${BRAND_SVG}ÇETELE</div>
+    <p class="sub" style="margin:0 0 18px;">Hesabınla giriş yap, kayıtların telefonda ve bilgisayarda aynı olsun. Verilerini senden başka kimse göremez.</p>
+    <button class="google-btn">
+      <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+      Google ile devam et
+    </button>
+    <div class="login-or">ya da e-posta ile</div>
+    <div class="seg">
+      <button class="seg-btn on" data-m="signin">Giriş yap</button>
+      <button class="seg-btn" data-m="signup">Üye ol</button>
+    </div>
+    <div class="field"><label>E-posta</label><input class="em" type="email" autocomplete="email" inputmode="email"></div>
+    <div class="field"><label>Şifre</label><input class="pw" type="password" autocomplete="current-password"></div>
+    <div class="field pw2-wrap" hidden><label>Şifre (tekrar)</label><input class="pw2" type="password" autocomplete="new-password"></div>
+    <div class="login-err small" role="alert"></div>
+    <button class="primary go" style="width:100%;">Giriş yap</button>
+    <div class="row" style="margin-top:10px;justify-content:space-between;">
+      <button class="ghost small forgot" style="flex:0 0 auto;color:var(--muted);">Şifremi unuttum</button>
+      <button class="ghost small guest" style="flex:0 0 auto;color:var(--muted);">Giriş yapmadan devam et</button>
+    </div>
+    <p class="small muted" style="margin:10px 0 0;">Giriş yapmadan devam edersen kayıtların sadece bu cihazda kalır.</p>
+  </div></div>`);
+  const $ = q => wrap.querySelector(q);
+  const err = $('.login-err');
+  const showErr = m => { err.textContent = m || ''; };
+  const busyBtn = (b, on) => { b.disabled = on; };
+  function setMode(m){
+    mode = m;
+    wrap.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+    $('.pw2-wrap').hidden = m !== 'signup';
+    $('.pw').setAttribute('autocomplete', m === 'signup' ? 'new-password' : 'current-password');
+    $('.go').textContent = m === 'signup' ? 'Üye ol' : 'Giriş yap';
+    showErr('');
+  }
+  wrap.querySelectorAll('.seg-btn').forEach(b => b.onclick = () => setMode(b.dataset.m));
+  $('.google-btn').onclick = async () => {
+    showErr('');
+    busyBtn($('.google-btn'), true);
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      await firebase.auth().signInWithPopup(provider);
+    } catch(e) {
+      if (e && (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request')) { /* user closed it */ }
+      else showErr(authErrorText(e));
+    } finally { busyBtn($('.google-btn'), false); }
+  };
+  const submit = async () => {
+    const email = $('.em').value.trim();
+    const pw = $('.pw').value;
+    showErr('');
+    if (!email || !pw) { showErr('E-posta ve şifre gir.'); return; }
+    if (mode === 'signup') {
+      if (pw.length < 6) { showErr('Şifre en az 6 karakter olmalı.'); return; }
+      if (pw !== $('.pw2').value) { showErr('Şifreler aynı değil.'); return; }
+    }
+    busyBtn($('.go'), true);
+    try {
+      if (mode === 'signup') await firebase.auth().createUserWithEmailAndPassword(email, pw);
+      else await firebase.auth().signInWithEmailAndPassword(email, pw);
+    } catch(e) { showErr(authErrorText(e)); }
+    finally { busyBtn($('.go'), false); }
+  };
+  $('.go').onclick = submit;
+  [$('.em'), $('.pw'), $('.pw2')].forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); }));
+  $('.forgot').onclick = async () => {
+    const email = $('.em').value.trim();
+    if (!email) { showErr('Önce e-posta adresini yaz, sonra "Şifremi unuttum"a bas.'); return; }
+    try {
+      await firebase.auth().sendPasswordResetEmail(email);
+      showErr('');
+      toast('Şifre sıfırlama bağlantısı e-postana gönderildi. Spam klasörüne de bak.');
+    } catch(e) { showErr(authErrorText(e)); }
+  };
+  $('.guest').onclick = async () => { setGuest(true); state.screen = 'app'; await loadAndRender(); };
+  return wrap;
+}
+
+// refresh from the cloud when the app comes back to the foreground (e.g. edited on the other device)
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible' || !isCloud || state.screen !== 'app') return;
+  if (document.querySelector('.overlay') || document.querySelector('.colmenu')) return;
+  const a = document.activeElement;
+  if (a && ['INPUT', 'TEXTAREA', 'SELECT'].includes(a.tagName)) return;
+  try {
+    const id = state.current && state.current.id;
+    state.leagues = await listLeagues();
+    if (id) state.current = (await loadLeague(id)) || state.current;
+    recompute(); render();
+  } catch(e){ console.error(e); }
+});
 function makeLocalDb(){
   const KEY = 'cetele_data_v1';
   localStorage.setItem('cetele_probe', '1'); localStorage.removeItem('cetele_probe');
@@ -268,7 +531,8 @@ const localDownloads = {
 async function initCaps(){
   if (!window.claude || typeof window.claude.use !== 'function') {
     isLocal = true;
-    try { db = makeLocalDb(); } catch(e){ db = null; }
+    try { localDb = makeLocalDb(); } catch(e){ localDb = null; }
+    db = localDb;
     downloadsCap = localDownloads;
     return;
   }
@@ -640,6 +904,7 @@ const state = {
   leagues: [],
   current: null, // full league object incl. id
   tab: 'kurulum',
+  screen: 'app',
   trView: { sortKey: 'addedAt', sortDir: 'desc', filters: { player: null, from: null, to: null }, teams: [], amtMin: null, amtMax: null },
   computed: null
 };
@@ -668,21 +933,15 @@ const TABS = [
 async function boot(){
   await initCaps();
   document.addEventListener('paste', onGlobalPaste);
-  state.leagues = await listLeagues();
-  const lastId = getLastLeagueId();
-  if (lastId && state.leagues.find(l => l.id === lastId)) {
-    state.current = await loadLeague(lastId);
-  } else if (state.leagues.length) {
-    state.current = await loadLeague(state.leagues[0].id);
-  }
-  recompute();
-  render();
+  if (isLocal && location.protocol !== 'file:') { await startCloud(); return; }
+  await loadAndRender();
 }
 
 function render(){
   closeMenu();
   const app = document.getElementById('app');
   app.innerHTML = '';
+  if (state.screen === 'login') { app.appendChild(renderLogin()); return; }
   app.appendChild(renderNav());
   const main = document.createElement('main');
   main.appendChild(renderTab());
@@ -697,7 +956,7 @@ function renderNav(){
       ${state.leagues.length === 0 ? '<option>Lig yok</option>' : state.leagues.map(l => `<option value="${l.id}" ${state.current && state.current.id===l.id ? 'selected' : ''}>${escapeHtml(l.name)}</option>`).join('')}
     </select>`;
   nav.innerHTML = `
-    <div class="brand"><svg class="mark" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><circle cx="12" cy="12" r="10.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 6.4l4.9 3.6-1.9 5.8H9l-1.9-5.8z" fill="currentColor"/><path d="M12 6.4V1.8M16.9 10l4.4-1.4M15 15.8l2.7 3.8M9 15.8l-2.7 3.8M7.1 10L2.7 8.6" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M9.9 11.6h4.2M12 9.5v4.2" stroke="var(--surface)" stroke-width="1.5" stroke-linecap="round"/></svg>ÇETELE</div>
+    <div class="brand">${BRAND_SVG}ÇETELE</div>
     <div class="field">
       <label>Aktif lig</label>
       ${leagueSelectHtml}
@@ -709,9 +968,21 @@ function renderNav(){
       ${state.current ? TABS.map(t => `<button class="tab ${state.tab===t.id?'active':''}" data-tab="${t.id}">${t.label}</button>`).join('') : ''}
       ${isOwner ? `<button class="tab ${state.tab==='inbox'?'active':''}" data-tab="inbox">Gelen geri bildirimler</button>` : ''}
     </div>
+    ${cloud.available ? (cloud.user
+      ? `<div class="nav-foot"><div class="small muted acct" title="Giriş yapılan hesap"></div><button id="logout-btn" class="ghost small" style="padding-left:0;color:var(--muted);">Çıkış yap</button></div>`
+      : `<div class="nav-foot"><div class="small muted" style="margin-bottom:6px;">Kayıtlar sadece bu cihazda</div><button id="login-btn" style="width:100%;">Giriş yap / üye ol</button></div>`) : ''}
     ${db && userCap ? `<div class="nav-foot"><button id="feedback-btn" class="ghost" style="width:100%;text-align:left;color:var(--muted);">✉ Geri bildirim gönder</button></div>` : ''}
   `;
   nav.querySelector('#new-league-btn').onclick = onNewLeague;
+  const acct = nav.querySelector('.acct');
+  if (acct && cloud.user) acct.textContent = cloud.user.email || cloud.user.displayName || 'Hesabın';
+  const lo = nav.querySelector('#logout-btn');
+  if (lo) lo.onclick = async () => {
+    const ok = await showConfirm('Hesabından çıkış yapılsın mı? Kayıtların hesabında saklanmaya devam eder.', 'Çıkış yap', false);
+    if (ok) { setGuest(false); firebase.auth().signOut(); }
+  };
+  const li = nav.querySelector('#login-btn');
+  if (li) li.onclick = () => { setGuest(false); state.screen = 'login'; render(); };
   const fbBtn = nav.querySelector('#feedback-btn');
   if (fbBtn) fbBtn.onclick = openFeedbackModal;
   const sel = nav.querySelector('#league-select');
@@ -902,8 +1173,10 @@ function renderBackupCard(){
   const card = el(`
     <div class="card">
       <h2>Yedekleme</h2>
-      <div class="sub">${isLocal
-        ? 'Verilerin sadece bu cihazdaki tarayıcıda saklanıyor, kimseyle paylaşılmıyor. Tarayıcı verilerini silersen kaybolur. Düzenli yedek al; telefon ile bilgisayar arasında taşımak için de yedek dosyasını kullan.'
+      <div class="sub">${isCloud
+        ? 'Kayıtların hesabında saklanıyor ve giriş yaptığın tüm cihazlarda aynı görünüyor. Yine de ara sıra yedek indirmeni öneririm.'
+        : isLocal
+        ? 'Verilerin sadece bu cihazdaki tarayıcıda saklanıyor, kimseyle paylaşılmıyor. Tarayıcı verilerini silersen kaybolur. Düzenli yedek al; telefon ile bilgisayar arasında taşımak için de yedek dosyasını kullan ya da giriş yap.'
         : 'Tüm liglerini tek bir dosyaya yedekle ya da bir yedek dosyasını geri yükle.'}</div>
       <div class="row">
         <button class="bk-down" style="flex:0 0 auto;">Yedek indir</button>
@@ -913,6 +1186,20 @@ function renderBackupCard(){
     </div>
   `);
   const fileIn = card.querySelector('input[type=file]');
+  if (isCloud && localDb) {
+    localLeagues().then(locals => {
+      if (!locals.length) return;
+      const b = el(`<button class="bk-mig" style="flex:0 0 auto;">Bu cihazdaki ${locals.length} yerel ligi hesabıma aktar</button>`);
+      b.onclick = async () => {
+        const ok = await showConfirm('Bu cihazda giriş yapmadan girdiğin ligler hesabına aktarılsın mı? Hesabında aynı lig varsa üzerine yazılır.', 'Aktar', false);
+        if (!ok) return;
+        const n = await migrateLocalToCloud();
+        await loadAndRender();
+        toast(`${n} lig hesabına aktarıldı.`);
+      };
+      card.querySelector('.row').appendChild(b);
+    }).catch(() => {});
+  }
   card.querySelector('.bk-down').onclick = async () => {
     if (!downloadsCap) { toast('İndirme bu görünümde desteklenmiyor.'); return; }
     const leagues = [];
