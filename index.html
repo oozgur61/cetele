@@ -1,0 +1,1940 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E1912">
+<meta name="apple-mobile-web-app-title" content="ÇETELE">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230E1912'/%3E%3Ccircle cx='12' cy='12' r='8.5' fill='none' stroke='%23D4A93E' stroke-width='1.6'/%3E%3Cpath d='M12 7.6l4 2.9-1.5 4.7h-5L8 10.5z' fill='%23D4A93E'/%3E%3C/svg%3E">
+<title>ÇETELE — Fantezi Lig Bütçe Takibi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0E1912;
+    --surface: #142219;
+    --surface-2: #1B2E21;
+    --line: #2A3D30;
+    --text: #EDF3ED;
+    --muted: #8FA391;
+    --accent: #D4A93E;
+    --accent-dim: #8A722C;
+    --danger: #E1543F;
+    --danger-bg: #2E1A16;
+    --positive: #4FAE6D;
+    --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+    --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #F4F6F3;
+      --surface: #FFFFFF;
+      --surface-2: #ECF1EA;
+      --line: #D7E0D8;
+      --text: #142219;
+      --muted: #5C6E5E;
+      --accent: #A9791C;
+      --accent-dim: #C9A75A;
+      --danger: #C23B27;
+      --danger-bg: #FBE7E3;
+      --positive: #2C8350;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0E1912; --surface: #142219; --surface-2: #1B2E21; --line: #2A3D30;
+    --text: #EDF3ED; --muted: #8FA391; --accent: #D4A93E; --accent-dim: #8A722C;
+    --danger: #E1543F; --danger-bg: #2E1A16; --positive: #4FAE6D;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; }
+  body {
+    margin: 0; min-height: 100%; background: var(--bg); color: var(--text);
+    font-family: var(--font-body); -webkit-font-smoothing: antialiased;
+  }
+  table { font-variant-numeric: tabular-nums; }
+  .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+  h1, h2, h3, .display { font-family: var(--font-display); }
+  a { color: var(--accent); }
+  button {
+    font-family: var(--font-body); cursor: pointer; border: 1px solid var(--line);
+    background: var(--surface-2); color: var(--text); border-radius: 8px;
+    padding: 9px 14px; font-size: 14px; font-weight: 600; transition: background .15s, border-color .15s;
+  }
+  button:hover { border-color: var(--accent-dim); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: var(--accent); color: #14200f; border-color: var(--accent); }
+  button.primary:hover { background: #e2ba54; }
+  button.danger { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); }
+  button.ghost { background: transparent; border-color: transparent; padding: 6px 8px; }
+  input, select, textarea {
+    font-family: var(--font-body); background: var(--surface-2); border: 1px solid var(--line);
+    color: var(--text); border-radius: 7px; padding: 8px 10px; font-size: 14px; width: 100%;
+  }
+  input:focus, select:focus, textarea:focus, button:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 1px;
+  }
+  label { font-size: 12.5px; color: var(--muted); display: block; margin-bottom: 4px; }
+  .field { margin-bottom: 12px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row > * { flex: 1; min-width: 140px; }
+
+  #app { display: flex; min-height: 100vh; min-height: 100dvh; }
+  nav#tabs {
+    width: 210px; flex: 0 0 210px; background: var(--surface); border-right: 1px solid var(--line);
+    padding: 18px 12px; position: sticky; top: env(safe-area-inset-top, 0px); align-self: flex-start;
+    height: 100dvh; overflow-y: auto;
+  }
+  nav#tabs .brand { font-family: var(--font-display); font-weight: 700; font-size: 19px; padding: 4px 8px 16px; }
+  nav#tabs .brand span { color: var(--accent); }
+  nav#tabs button.tab {
+    display: block; width: 100%; text-align: left; background: transparent; border: none;
+    padding: 10px 10px; border-radius: 8px; color: var(--muted); font-weight: 600; margin-bottom: 2px;
+  }
+  nav#tabs button.tab.active { background: var(--surface-2); color: var(--text); }
+  nav#tabs button.tab:hover { color: var(--text); }
+  nav#tabs .league-name { font-size: 12.5px; color: var(--muted); padding: 0 8px 6px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
+  main { flex: 1; min-width: 0; padding: 24px 28px 60px; max-width: 980px; }
+  @media (max-width: 780px) {
+    #app { flex-direction: column; }
+    nav#tabs { width: 100%; flex: none; position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line); padding: 12px; }
+    nav#tabs .brand { padding-bottom: 8px; }
+    #tablist { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+    nav#tabs button.tab { width: auto; white-space: nowrap; margin-bottom: 0; }
+    main { padding: 18px 14px 50px; }
+  }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; }
+  .card h2 { margin: 0 0 4px; font-size: 17px; }
+  .card .sub { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+
+  table.data { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.data th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; text-transform: none; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  table.data td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.data tr:last-child td { border-bottom: none; }
+  table.data td.amt, table.data th.amt { text-align: right; }
+  .pos { color: var(--positive); }
+  .neg { color: var(--danger); }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+  .pill.warn { background: var(--danger-bg); color: var(--danger); }
+  .pill.ok { background: rgba(79,174,109,.15); color: var(--positive); }
+  .empty { color: var(--muted); font-size: 13.5px; padding: 20px 4px; text-align: center; }
+
+  .overlay {
+    position: fixed; inset: 0; background: rgba(4,8,5,.6); display: flex; align-items: center;
+    justify-content: center; padding: 20px; z-index: 50;
+  }
+  .modal { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px; max-width: 640px; width: 100%; max-height: 85dvh; overflow-y: auto; }
+  .modal h3 { margin-top: 0; }
+
+  .team-tag { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-dim); flex: none; }
+
+  .toast {
+    position: fixed; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%);
+    background: var(--surface-2); border: 1px solid var(--line); color: var(--text); padding: 10px 16px;
+    border-radius: 9px; font-size: 13.5px; z-index: 80; box-shadow: 0 6px 20px rgba(0,0,0,.3);
+  }
+  .muted { color: var(--muted); }
+  .small { font-size: 12.5px; }
+  .rank-list { list-style: none; padding: 0; margin: 0; }
+  .rank-list li {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--surface-2);
+    border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; cursor: grab;
+  }
+  .rank-list li .n { font-family: var(--font-display); font-weight: 700; color: var(--accent); width: 22px; }
+  .drop-zone {
+    border: 1.5px dashed var(--line); border-radius: 10px; padding: 22px; text-align: center;
+    color: var(--muted); font-size: 13.5px; cursor: pointer; margin-bottom: 10px;
+  }
+  .drop-zone:hover { border-color: var(--accent-dim); color: var(--text); }
+  .preview-table input { padding: 5px 7px; font-size: 13px; }
+  .icon-btn { background: transparent; border: none; color: var(--muted); padding: 3px 6px; font-size: 16px; line-height: 1; }
+  .icon-btn:hover { color: var(--danger); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } }
+  .helptext { font-size: 12px; color: var(--muted); margin-top: -6px; margin-bottom: 12px; }
+  nav#tabs .brand { letter-spacing: .04em; display: flex; align-items: center; gap: 9px; }
+  nav#tabs .brand .mark { color: var(--accent); flex: none; }
+  .tally { display: inline-block; width: 26px; height: 16px; position: relative;
+    background: repeating-linear-gradient(90deg, var(--accent) 0 2px, transparent 2px 6px); }
+  .tally::after { content: ""; position: absolute; left: -2px; right: -2px; top: 7px; height: 2px; background: var(--accent); transform: rotate(-24deg); }
+  .paste-zone { border: 1.5px dashed var(--line); border-radius: 10px; padding: 22px 16px; text-align: center;
+    color: var(--muted); font-size: 13.5px; min-height: 76px; cursor: text; margin-bottom: 10px; outline: none; }
+  .paste-zone:empty::before { content: attr(data-placeholder); }
+  .paste-zone:focus, .paste-zone.drag { border-color: var(--accent); color: var(--text); background: var(--surface-2); }
+  .warn-mark { color: var(--accent); font-size: 12px; cursor: help; }
+  .warn-card { border-color: var(--accent-dim); background: rgba(212,169,62,.08); font-size: 13.5px; line-height: 1.5; }
+  .warn-card strong:first-child { color: var(--accent); }
+  .nav-foot { margin-top: 18px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .fb-item { padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .fb-item:last-child { border-bottom: none; }
+  .fb-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+  .fb-text { white-space: pre-wrap; font-size: 14px; line-height: 1.5; }
+  .danger-card { border-color: var(--danger); }
+  .danger-card h2 { color: var(--danger); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px; }
+  .chip { padding: 5px 11px; border-radius: 999px; font-size: 12.5px; font-weight: 600; background: transparent; }
+  .chip.on { background: var(--accent); color: #14200f; border-color: var(--accent); }
+  .summary-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; font-size: 13px; color: var(--muted); }
+  .fh-btn { background: transparent; border: none; padding: 2px 0; color: var(--muted); font-size: 12px; font-weight: 600; display: inline-flex; gap: 6px; align-items: center; border-radius: 4px; }
+  .fh-btn:hover { color: var(--text); border: none; }
+  .fh-btn.active { color: var(--accent); }
+  .fh-btn .ind { font-size: 11px; opacity: .85; }
+  .fdot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; }
+  th.amt .fh-btn { justify-content: flex-end; }
+  .colmenu { position: fixed; z-index: 60; width: 270px; max-width: calc(100vw - 16px); background: var(--surface); border: 1px solid var(--line);
+    border-radius: 10px; padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+  .menu-item { display: block; width: 100%; text-align: left; background: transparent; border: none; padding: 8px; font-weight: 500; border-radius: 6px; }
+  .menu-item:hover { background: var(--surface-2); border: none; }
+  .menu-sep { height: 1px; background: var(--line); margin: 6px 0 8px; }
+  .menu-list { max-height: 220px; overflow-y: auto; margin: 4px 0 8px; padding: 2px; }
+  .menu-list .chk { margin-bottom: 5px; font-size: 13px; }
+  .chk { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--text); margin-bottom: 8px; }
+  .chk input { width: auto; }
+  details > summary { cursor: pointer; font-family: var(--font-display); font-weight: 600; font-size: 15px; }
+  .spinner { width: 28px; height: 28px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; margin: 6px auto 12px; animation: spin .9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(function(){
+"use strict";
+
+// ---------- utils ----------
+function fmt(n){
+  n = Math.round(n || 0);
+  const neg = n < 0; n = Math.abs(n);
+  return (neg?'-':'') + n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+function parseAmount(str){
+  if (typeof str === 'number') return Math.round(str);
+  if (!str) return NaN;
+  const cleaned = String(str).replace(/[^\d-]/g, '');
+  if (!cleaned) return NaN;
+  return parseInt(cleaned, 10);
+}
+function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
+function nowIso(){ return new Date().toISOString(); }
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function el(html){ const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; }
+function toast(msg){
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const t = el(`<div class="toast">${escapeHtml(msg)}</div>`);
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 3200);
+}
+
+// ---------- capabilities ----------
+let db = null, sampleFn = null, downloadsCap = null, imgLimits = null, userCap = null, isOwner = false;
+let isLocal = false;
+function makeLocalDb(){
+  const KEY = 'cetele_data_v1';
+  localStorage.setItem('cetele_probe', '1'); localStorage.removeItem('cetele_probe');
+  const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(e){ return {}; } };
+  const write = (o) => localStorage.setItem(KEY, JSON.stringify(o));
+  const snap = (id, d) => ({ id, exists: d !== undefined, data: () => d === undefined ? undefined : JSON.parse(JSON.stringify(d)) });
+  return {
+    doc(path){
+      const [col, id] = path.split('/');
+      return {
+        get: async () => snap(id, (read()[col] || {})[id]),
+        set: async (body) => { const o = read(); o[col] = o[col] || {}; o[col][id] = JSON.parse(JSON.stringify(body)); write(o); },
+        delete: async () => { const o = read(); if (o[col]) delete o[col][id]; write(o); }
+      };
+    },
+    collection(col){
+      return { get: async () => { const docs = Object.entries(read()[col] || {}).map(([id, d]) => snap(id, d)); return { docs, size: docs.length, empty: !docs.length }; } };
+    }
+  };
+}
+const localDownloads = {
+  save: async ({ filename, data }) => {
+    const blob = data instanceof Blob ? data : new Blob([data], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+};
+async function initCaps(){
+  if (!window.claude || typeof window.claude.use !== 'function') {
+    isLocal = true;
+    try { db = makeLocalDb(); } catch(e){ db = null; }
+    downloadsCap = localDownloads;
+    return;
+  }
+  try { db = await window.claude.use('db'); } catch(e){ db = null; }
+  try { sampleFn = await window.claude.use('sample'); } catch(e){ sampleFn = null; }
+  try { downloadsCap = await window.claude.use('downloads'); } catch(e){ downloadsCap = null; }
+  try { userCap = await window.claude.use('user'); } catch(e){ userCap = null; }
+  try { isOwner = userCap ? await userCap.isOwner() : false; } catch(e){ isOwner = false; }
+  if (sampleFn) {
+    try { const caps = await sampleFn.limits(); imgLimits = caps && caps.images ? caps.images : null; } catch(e){ imgLimits = null; }
+  }
+}
+
+// ---------- local (per-viewer) state ----------
+function getLastLeagueId(){
+  try { return localStorage.getItem('kd_last_league'); } catch(e){ return null; }
+}
+function setLastLeagueId(id){
+  try { localStorage.setItem('kd_last_league', id); } catch(e){}
+}
+
+// ---------- default league shape ----------
+function newLeague(name){
+  return {
+    name: name || 'Yeni Lig',
+    createdAt: nowIso(),
+    teams: [],
+    marketName: 'Computer',
+    startingBudget: 100000000,
+    negativeBudgetRule: 0.25, // 0.25 or 0
+    zeroPointsIfNegative: true,
+    pointBonusPerPoint: 10000,
+    adminBonusEnabled: false,
+    adminBonusTable: [],
+    transfers: [],       // {id, player, amount, from, to, addedAt}
+    squadValues: {},     // team -> {value, updatedAt}
+    pointsLog: [],        // {id, team, mode:'weekly'|'cumulative', value, addedAt, label}
+    adminBonusLog: []     // {id, ranking:[team...], label, addedAt}
+  };
+}
+
+// ---------- calculation engine ----------
+function computeLeague(lg){
+  const teams = lg.teams || [];
+  const ledger = {}; teams.forEach(t => ledger[t] = []);
+  teams.forEach(t => ledger[t].push({ type: 'baslangic', label: 'Başlangıç bütçesi', amount: lg.startingBudget }));
+
+  (lg.transfers || []).forEach(tr => {
+    if (teams.includes(tr.to)) {
+      ledger[tr.to].push({ type: 'alis', label: `${tr.player} (${tr.from}'den alış)`, amount: -Math.abs(tr.amount) });
+    }
+    if (teams.includes(tr.from)) {
+      ledger[tr.from].push({ type: 'satis', label: `${tr.player} (${tr.to}'a satış)`, amount: Math.abs(tr.amount) });
+    }
+  });
+
+  // points, per team, processed in chronological order
+  const cumByTeam = {};
+  (lg.pointsLog || []).slice().sort((a,b)=> (a.addedAt||'').localeCompare(b.addedAt||'')).forEach(p => {
+    if (!teams.includes(p.team)) return;
+    const prior = cumByTeam[p.team] || 0;
+    let credited, newCum;
+    if (p.mode === 'cumulative') {
+      credited = p.value - prior;
+      newCum = p.value;
+    } else {
+      credited = p.value;
+      newCum = prior + p.value;
+    }
+    cumByTeam[p.team] = newCum;
+    const bonus = credited * (lg.pointBonusPerPoint || 10000);
+    ledger[p.team].push({
+      type: 'puan',
+      label: `Puan bonusu — ${p.label ? p.label + ' — ' : ''}${p.value} puan (${p.mode === 'cumulative' ? 'toplam' : 'bu hafta'})`,
+      amount: bonus
+    });
+  });
+
+  if (lg.adminBonusEnabled) {
+    (lg.adminBonusLog || []).forEach(entry => {
+      (entry.ranking || []).forEach((team, idx) => {
+        if (!teams.includes(team)) return;
+        const amt = (lg.adminBonusTable || [])[idx];
+        if (amt == null) return;
+        ledger[team].push({ type: 'admin', label: `Sıralama bonusu${entry.label ? ' — ' + entry.label : ''} (${idx+1}. sıra)`, amount: amt });
+      });
+    });
+  }
+
+  const budgets = {};
+  teams.forEach(t => {
+    let running = 0;
+    ledger[t].forEach(e => { running += e.amount; e.runningBalance = running; });
+    budgets[t] = running;
+  });
+
+  const squadValues = {};
+  teams.forEach(t => { squadValues[t] = (lg.squadValues && lg.squadValues[t] && lg.squadValues[t].value) || 0; });
+
+  const maxBid = {};
+  teams.forEach(t => { maxBid[t] = budgets[t] + squadValues[t] * (lg.negativeBudgetRule || 0); });
+
+  return { ledger, budgets, squadValues, maxBid };
+}
+
+// ---------- db persistence ----------
+async function listLeagues(){
+  if (!db) return [];
+  try {
+    const snap = await db.collection('leagues').get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch(e){ console.error(e); return []; }
+}
+async function loadLeague(id){
+  if (!db) return null;
+  try {
+    const snap = await db.doc('leagues/' + id).get();
+    return snap.exists ? { id, ...snap.data() } : null;
+  } catch(e){ console.error(e); return null; }
+}
+async function saveLeague(lg){
+  if (!db) { toast('Depolama kullanılamıyor, değişiklik kaydedilemedi.'); return false; }
+  const { id, ...body } = lg;
+  try {
+    await db.doc('leagues/' + id).set(body);
+    return true;
+  } catch(e){ console.error(e); toast('Kaydetme hatası.'); return false; }
+}
+async function createLeague(name){
+  if (!db) { toast('Depolama kullanılamıyor.'); return null; }
+  const id = uid();
+  const lg = newLeague(name);
+  try {
+    await db.doc('leagues/' + id).set(lg);
+    return { id, ...lg };
+  } catch(e){ console.error(e); toast('Lig oluşturulamadı.'); return null; }
+}
+
+// ---------- in-app prompt/confirm (native dialogs are blocked in this sandbox) ----------
+function showPrompt(message, defaultValue){
+  return new Promise((resolve) => {
+    const overlay = el(`<div class="overlay"></div>`);
+    const modal = el(`
+      <div class="modal" style="max-width:420px;">
+        <h3>${escapeHtml(message)}</h3>
+        <div class="field"><input id="prompt-input" value="${escapeHtml(defaultValue||'')}"></div>
+        <div class="row">
+          <button id="prompt-cancel" style="flex:1;">Vazgeç</button>
+          <button id="prompt-ok" class="primary" style="flex:1;">Tamam</button>
+        </div>
+      </div>
+    `);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    const input = modal.querySelector('#prompt-input');
+    input.focus(); input.select();
+    function done(val){ overlay.remove(); resolve(val); }
+    modal.querySelector('#prompt-cancel').onclick = () => done(null);
+    modal.querySelector('#prompt-ok').onclick = () => done(input.value.trim() || null);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') done(input.value.trim() || null); if (e.key === 'Escape') done(null); });
+    overlay.onclick = (e) => { if (e.target === overlay) done(null); };
+  });
+}
+function showConfirm(message, yesLabel, danger){
+  return new Promise((resolve) => {
+    const overlay = el(`<div class="overlay"></div>`);
+    const modal = el(`
+      <div class="modal" style="max-width:420px;">
+        <h3>${escapeHtml(message)}</h3>
+        <div class="row">
+          <button id="confirm-no" style="flex:1;">Vazgeç</button>
+          <button id="confirm-yes" class="${danger === false ? 'primary' : 'danger'}" style="flex:1;">${escapeHtml(yesLabel || 'Evet, Sil')}</button>
+        </div>
+      </div>
+    `);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    function done(val){ overlay.remove(); resolve(val); }
+    modal.querySelector('#confirm-no').onclick = () => done(false);
+    modal.querySelector('#confirm-yes').onclick = () => done(true);
+    overlay.onclick = (e) => { if (e.target === overlay) done(false); };
+  });
+}
+
+// ---------- image intake (paste / drop / pick) ----------
+let busy = false;
+function toNum(v){
+  if (v == null || v === '') return null;
+  if (typeof v === 'number') return isFinite(v) ? Math.round(v) : null;
+  const n = parseAmount(v);
+  return isNaN(n) ? null : n;
+}
+function limitFiles(files){
+  const max = imgLimits && imgLimits.maxCount;
+  if (max && files.length > max) { toast(`Tek seferde en fazla ${max} görsel okunabilir, ilk ${max} tanesi alındı.`); return files.slice(0, max); }
+  return files;
+}
+function sampleErrorText(e){
+  const c = e && e.code;
+  const map = {
+    not_granted: 'Görsel okuma için izin verilmedi.',
+    images_unavailable: 'Bu görünümde görsel gönderimi desteklenmiyor.',
+    image_rejected: 'Görsel kabul edilmedi (format ya da boyut).',
+    rate_limited: 'Çok sık istek gönderildi, biraz bekleyip tekrar dene.',
+    invalid_json: 'Görsel okunamadı, tekrar dene.',
+    cancelled: 'İşlem iptal edildi.'
+  };
+  return map[c] || ('Görsel okunamadı (' + (c || 'bilinmeyen hata') + ').');
+}
+function showBusy(msg){
+  const o = el(`<div class="overlay"><div class="modal" style="max-width:360px;text-align:center;">
+    <div class="spinner"></div><p style="margin:0 0 6px;font-weight:600;">${escapeHtml(msg)}</p>
+    <p class="small muted" style="margin:0;">Bu işlem 10–60 saniye sürebilir.</p></div></div>`);
+  document.body.appendChild(o);
+  return () => o.remove();
+}
+function filesFromClipboard(cd){
+  const out = [];
+  if (!cd) return out;
+  if (cd.files && cd.files.length) for (const f of cd.files) if (f.type && f.type.startsWith('image/')) out.push(f);
+  if (!out.length && cd.items) for (const it of cd.items) {
+    if (it.kind === 'file' && it.type.startsWith('image/')) { const f = it.getAsFile(); if (f) out.push(f); }
+  }
+  return out;
+}
+function dataUrlToBlob(u){
+  const [h, b] = u.split(',');
+  const mime = (h.match(/data:([^;]+)/) || [])[1] || 'image/png';
+  const bin = atob(b);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+function imageIntake(onFiles){
+  if (!sampleFn) return el(`<div class="empty">Görsel okuma bu görünümde kullanılamıyor.</div>`);
+  const box = el(`<div>
+    <div class="paste-zone" contenteditable="true" spellcheck="false" role="textbox" aria-label="Ekran görüntüsü yapıştırma alanı"
+      data-placeholder="Ekran görüntüsünü buraya yapıştır. Bilgisayarda tıklayıp Ctrl+V (Mac: ⌘+V), telefonda uzun basıp Yapıştır. Sürükleyip bırakabilirsin de."></div>
+    <div class="row"><button class="pick" style="flex:0 0 auto;">📷 Dosyadan seç</button></div>
+    <input type="file" accept="image/*" multiple style="display:none;">
+  </div>`);
+  const zone = box.querySelector('.paste-zone');
+  const input = box.querySelector('input[type=file]');
+  zone.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey) && e.key.length === 1) e.preventDefault();
+  });
+  zone.addEventListener('paste', e => {
+    const files = filesFromClipboard(e.clipboardData);
+    e.preventDefault();
+    zone.innerHTML = '';
+    if (files.length) onFiles(files);
+    else toast('Panoda görsel bulunamadı. Önce ekran görüntüsünü kopyala.');
+  });
+  // Some mobile browsers insert the image directly instead of firing a paste with files
+  zone.addEventListener('input', async () => {
+    const img = zone.querySelector('img');
+    const src = img && img.getAttribute('src');
+    zone.innerHTML = '';
+    if (!src) return;
+    try {
+      const blob = src.startsWith('data:') ? dataUrlToBlob(src) : await (await fetch(src)).blob();
+      if (blob && blob.type.startsWith('image/')) onFiles([new File([blob], 'yapistirilan.png', { type: blob.type })]);
+    } catch(err) { toast('Yapıştırılan görsel okunamadı, "Dosyadan seç" ile dene.'); }
+  });
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag');
+    const files = Array.from((e.dataTransfer && e.dataTransfer.files) || []).filter(f => f.type.startsWith('image/'));
+    if (files.length) onFiles(files); else toast('Bırakılan dosya bir görsel değil.');
+  });
+  box.querySelector('.pick').onclick = () => input.click();
+  input.onchange = () => { const files = Array.from(input.files || []); input.value = ''; if (files.length) onFiles(files); };
+  return box;
+}
+// Paste anywhere on the page (outside the paste zone) also works on the relevant tabs
+function onGlobalPaste(e){
+  if (e.defaultPrevented || !state.current || !sampleFn) return;
+  if (document.querySelector('.overlay')) return;
+  const files = filesFromClipboard(e.clipboardData);
+  if (!files.length) return;
+  if (state.tab === 'transferler') { e.preventDefault(); handleScreenshotUpload(files); }
+  else if (state.tab === 'puanlar') { e.preventDefault(); handleStandingsScreenshot(files, 'points'); }
+  else if (state.tab === 'kadro') { e.preventDefault(); handleStandingsScreenshot(files, 'squad'); }
+}
+
+// ---------- feedback (stored privately; only the app owner can read) ----------
+async function openFeedbackModal(){
+  const uidv = userCap ? await userCap.id().catch(() => null) : null;
+  if (!uidv) { toast('Geri bildirim bu görünümde gönderilemiyor.'); return; }
+  const overlay = el(`<div class="overlay"></div>`);
+  const modal = el(`
+    <div class="modal" style="max-width:480px;">
+      <h3>Geri bildirim gönder</h3>
+      <p class="sub" style="margin-top:-8px;">Hata, öneri ya da istediğin bir özellik. Mesajını sadece uygulamanın geliştiricisi görür.</p>
+      <div class="field"><label>Konu</label>
+        <select id="fb-cat"><option value="hata">Hata bildirimi</option><option value="oneri">Öneri / yeni özellik</option><option value="diger">Diğer</option></select>
+      </div>
+      <div class="field"><label>Mesaj</label><textarea id="fb-text" rows="5" maxlength="2000" placeholder="Ne oldu, ne bekliyordun?"></textarea></div>
+      <div class="row">
+        <button id="fb-cancel" style="flex:1;">Vazgeç</button>
+        <button id="fb-send" class="primary" style="flex:1;">Gönder</button>
+      </div>
+    </div>`);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  modal.querySelector('#fb-text').focus();
+  modal.querySelector('#fb-cancel').onclick = () => overlay.remove();
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  modal.querySelector('#fb-send').onclick = async () => {
+    const text = modal.querySelector('#fb-text').value.trim();
+    if (!text) { toast('Mesaj boş olamaz.'); return; }
+    const btn = modal.querySelector('#fb-send');
+    btn.disabled = true;
+    try {
+      const ref = db.doc('feedback/' + uidv);
+      const snap = await ref.get();
+      const prev = snap.exists ? (snap.data().messages || []) : [];
+      const messages = prev.concat([{ id: uid(), cat: modal.querySelector('#fb-cat').value, text: text.slice(0, 2000), at: nowIso(), league: state.current ? state.current.name : '' }]).slice(-100);
+      await ref.set({ messages, updatedAt: nowIso() });
+      overlay.remove();
+      toast('Geri bildirimin gönderildi, teşekkürler.');
+    } catch(e) {
+      console.error(e);
+      btn.disabled = false;
+      toast('Gönderilemedi, tekrar dene.');
+    }
+  };
+}
+
+function renderInbox(){
+  const wrap = el(`<div class="card"><h2>Gelen geri bildirimler</h2><div class="sub">Bu sekmeyi sadece sen görüyorsun.</div><div class="ib"><div class="empty">Yükleniyor…</div></div></div>`);
+  const host = wrap.querySelector('.ib');
+  (async () => {
+    try {
+      const snap = await db.collection('feedback').get();
+      const items = [];
+      snap.docs.forEach(d => (d.data().messages || []).forEach(m => items.push({ ...m, sender: d.id })));
+      items.sort((a, b) => (b.at || '').localeCompare(a.at || ''));
+      host.innerHTML = '';
+      if (!items.length) { host.appendChild(el(`<div class="empty">Henüz geri bildirim yok.</div>`)); return; }
+      let names = {};
+      try { names = await userCap.profiles([...new Set(items.map(i => i.sender))]); } catch(e) {}
+      const catLabel = { hata: 'Hata', oneri: 'Öneri', diger: 'Diğer' };
+      items.forEach(m => {
+        const who = (names[m.sender] && names[m.sender].name) || 'Bir kullanıcı';
+        const when = m.at ? new Date(m.at).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+        const row = el(`<div class="fb-item">
+          <div class="fb-head"><span class="pill ${m.cat === 'hata' ? 'warn' : 'ok'}">${catLabel[m.cat] || 'Diğer'}</span>
+            <span class="small"></span><span class="small muted">${when}${m.league ? ', lig: ' + escapeHtml(m.league) : ''}</span></div>
+          <div class="fb-text"></div>
+        </div>`);
+        row.querySelector('.fb-head .small').textContent = who;
+        row.querySelector('.fb-text').textContent = m.text;
+        host.appendChild(row);
+      });
+    } catch(e) {
+      console.error(e);
+      host.innerHTML = '';
+      host.appendChild(el(`<div class="empty">Geri bildirimler yüklenemedi.</div>`));
+    }
+  })();
+  return wrap;
+}
+
+// ---------- app state ----------
+const state = {
+  leagues: [],
+  current: null, // full league object incl. id
+  tab: 'kurulum',
+  trView: { sortKey: 'addedAt', sortDir: 'desc', filters: { player: null, from: null, to: null }, teams: [], amtMin: null, amtMax: null },
+  computed: null
+};
+
+function recompute(){
+  state.computed = state.current ? computeLeague(state.current) : null;
+}
+
+async function persist(){
+  if (!state.current) return;
+  await saveLeague(state.current);
+  recompute();
+  render();
+}
+
+// ---------- render shell ----------
+const TABS = [
+  { id: 'kurulum', label: 'Lig Kurulumu' },
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'kadro', label: 'Kadro Değerleri' },
+  { id: 'transferler', label: 'Transferler' },
+  { id: 'puanlar', label: 'Puanlar' },
+  { id: 'siralama', label: 'Sıralama Bonusu' },
+];
+
+async function boot(){
+  await initCaps();
+  document.addEventListener('paste', onGlobalPaste);
+  state.leagues = await listLeagues();
+  const lastId = getLastLeagueId();
+  if (lastId && state.leagues.find(l => l.id === lastId)) {
+    state.current = await loadLeague(lastId);
+  } else if (state.leagues.length) {
+    state.current = await loadLeague(state.leagues[0].id);
+  }
+  recompute();
+  render();
+}
+
+function render(){
+  closeMenu();
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  app.appendChild(renderNav());
+  const main = document.createElement('main');
+  main.appendChild(renderTab());
+  app.appendChild(main);
+}
+
+function renderNav(){
+  const nav = document.createElement('nav');
+  nav.id = 'tabs';
+  const leagueSelectHtml = `
+    <select id="league-select" ${!db ? 'disabled' : ''}>
+      ${state.leagues.length === 0 ? '<option>Lig yok</option>' : state.leagues.map(l => `<option value="${l.id}" ${state.current && state.current.id===l.id ? 'selected' : ''}>${escapeHtml(l.name)}</option>`).join('')}
+    </select>`;
+  nav.innerHTML = `
+    <div class="brand"><svg class="mark" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><circle cx="12" cy="12" r="10.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 6.4l4.9 3.6-1.9 5.8H9l-1.9-5.8z" fill="currentColor"/><path d="M12 6.4V1.8M16.9 10l4.4-1.4M15 15.8l2.7 3.8M9 15.8l-2.7 3.8M7.1 10L2.7 8.6" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M9.9 11.6h4.2M12 9.5v4.2" stroke="var(--surface)" stroke-width="1.5" stroke-linecap="round"/></svg>ÇETELE</div>
+    <div class="field">
+      <label>Aktif lig</label>
+      ${leagueSelectHtml}
+    </div>
+    <div class="row" style="margin-bottom:16px;">
+      <button id="new-league-btn" style="flex:1;">+ Yeni Lig</button>
+    </div>
+    <div id="tablist">
+      ${state.current ? TABS.map(t => `<button class="tab ${state.tab===t.id?'active':''}" data-tab="${t.id}">${t.label}</button>`).join('') : ''}
+      ${isOwner ? `<button class="tab ${state.tab==='inbox'?'active':''}" data-tab="inbox">Gelen geri bildirimler</button>` : ''}
+    </div>
+    ${db && userCap ? `<div class="nav-foot"><button id="feedback-btn" class="ghost" style="width:100%;text-align:left;color:var(--muted);">✉ Geri bildirim gönder</button></div>` : ''}
+  `;
+  nav.querySelector('#new-league-btn').onclick = onNewLeague;
+  const fbBtn = nav.querySelector('#feedback-btn');
+  if (fbBtn) fbBtn.onclick = openFeedbackModal;
+  const sel = nav.querySelector('#league-select');
+  if (sel) sel.onchange = async (e) => {
+    const id = e.target.value;
+    state.current = await loadLeague(id);
+    setLastLeagueId(id);
+    state.tab = 'kurulum';
+    recompute(); render();
+  };
+  nav.querySelectorAll('button.tab').forEach(b => b.onclick = () => { state.tab = b.dataset.tab; render(); });
+  return nav;
+}
+
+async function onNewLeague(){
+  const name = await showPrompt('Yeni lig adı:');
+  if (!name) return;
+  const lg = await createLeague(name.trim());
+  if (!lg) return;
+  state.leagues = await listLeagues();
+  state.current = lg;
+  setLastLeagueId(lg.id);
+  state.tab = 'kurulum';
+  recompute(); render();
+  toast('Lig oluşturuldu. Şimdi takımları ekle.');
+}
+
+function renderTab(){
+  if (!db) return el(`<div class="card"><h2>Depolama kullanılamıyor</h2><p class="sub">Tarayıcı veri saklamaya izin vermiyor. Gizli/özel sekmede açtıysan normal bir sekmede açmayı dene.</p></div>`);
+  if (state.tab === 'inbox' && isOwner) return renderInbox();
+  if (!state.current) {
+    return el(`<div class="card"><h2>Başlamak için bir lig oluştur</h2><p class="sub">Soldaki "+ Yeni Lig" butonuna tıkla, lig adını gir ve Lig Kurulumu sekmesinden takımlarını tanımla.</p></div>`);
+  }
+  switch(state.tab){
+    case 'kurulum': return renderKurulum();
+    case 'transferler': return renderTransferler();
+    case 'puanlar': return renderPuanlar();
+    case 'siralama': return renderSiralama();
+    case 'kadro': return renderKadro();
+    case 'dashboard': return renderDashboard();
+    default: return document.createElement('div');
+  }
+}
+
+// ---------- KURULUM ----------
+function renderKurulum(){
+  const lg = state.current;
+  const wrap = el(`<div></div>`);
+  wrap.appendChild(el(`
+    <div class="card">
+      <h2>${escapeHtml(lg.name)}</h2>
+      <div class="sub">Temel lig ayarları</div>
+      <div class="grid2">
+        <div class="field"><label>Lig adı</label><input id="f-name" value="${escapeHtml(lg.name)}"></div>
+        <div class="field"><label>Market/Bot hesabının adı (örn. Computer)</label><input id="f-market" value="${escapeHtml(lg.marketName)}"></div>
+        <div class="field"><label>Başlangıç bütçesi</label><input id="f-start" class="num" value="${lg.startingBudget}"></div>
+        <div class="field">
+          <label>Eksi bütçe kuralı</label>
+          <select id="f-negrule">
+            <option value="0.25" ${lg.negativeBudgetRule===0.25?'selected':''}>Kadro değerinin %25'ine kadar eksiye düşebilir</option>
+            <option value="0" ${lg.negativeBudgetRule===0?'selected':''}>Hiç eksiye düşemez</option>
+          </select>
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+        <input type="checkbox" id="f-zeropoints" style="width:auto;" ${lg.zeroPointsIfNegative?'checked':''}>
+        Haftanın ilk maçı başladığında bütçesi eksi olan takım o hafta 0 puan alır
+      </label>
+      <div class="helptext">Puan bonusu oyunun sabit kuralı: puan başına 10.000, bu ayarlanamaz.</div>
+      <div style="margin-top:14px;"><button class="primary" id="save-basic">Kaydet</button></div>
+    </div>
+  `));
+
+  wrap.appendChild(el(`
+    <div class="card">
+      <h2>Takımlar</h2>
+      <div class="sub">Ligdeki tüm takımların gerçek isimleri (market/bot hesabı hariç)</div>
+      <div id="team-list"></div>
+      <div class="row" style="margin-top:10px;">
+        <input id="new-team" placeholder="Takım adı ekle...">
+        <button id="add-team" style="flex:0 0 auto;">Ekle</button>
+      </div>
+    </div>
+  `));
+  const teamListEl = wrap.querySelector('#team-list');
+  function renderTeamList(){
+    teamListEl.innerHTML = '';
+    if (!lg.teams.length) { teamListEl.appendChild(el(`<div class="empty">Henüz takım eklenmedi.</div>`)); return; }
+    lg.teams.forEach((t, i) => {
+      const row = el(`<div class="row" style="margin-bottom:6px;align-items:center;">
+        <div style="flex:3;">${escapeHtml(t)}</div>
+        <button class="icon-btn" style="flex:0 0 auto;" title="Sil">✕</button>
+      </div>`);
+      row.querySelector('button').onclick = async () => {
+        const ok = await showConfirm(`"${t}" takımını silmek istediğine emin misin? Bu takıma ait geçmiş veriler ledger'da kalır ama hesaplamalarda görünmez.`);
+        if (!ok) return;
+        lg.teams.splice(i, 1);
+        await persist();
+      };
+      teamListEl.appendChild(row);
+    });
+  }
+  renderTeamList();
+  wrap.querySelector('#add-team').onclick = async () => {
+    const inp = wrap.querySelector('#new-team');
+    const name = inp.value.trim();
+    if (!name) return;
+    if (lg.teams.includes(name)) { toast('Bu takım zaten ekli.'); return; }
+    lg.teams.push(name);
+    inp.value = '';
+    await persist();
+  };
+  wrap.querySelector('#save-basic').onclick = async () => {
+    lg.name = wrap.querySelector('#f-name').value.trim() || lg.name;
+    lg.marketName = wrap.querySelector('#f-market').value.trim() || 'Computer';
+    const sb = parseAmount(wrap.querySelector('#f-start').value);
+    if (!isNaN(sb)) lg.startingBudget = sb;
+    lg.negativeBudgetRule = parseFloat(wrap.querySelector('#f-negrule').value);
+    lg.zeroPointsIfNegative = wrap.querySelector('#f-zeropoints').checked;
+    state.leagues = await listLeagues();
+    await persist();
+    toast('Kaydedildi.');
+  };
+  wrap.appendChild(renderBackupCard());
+  wrap.appendChild(renderDeleteLeagueCard(lg));
+  return wrap;
+}
+
+function renderDeleteLeagueCard(lg){
+  const card = el(`
+    <div class="card danger-card">
+      <h2>Ligi sil</h2>
+      <div class="sub">"${escapeHtml(lg.name)}" ligi ve içindeki tüm kayıtlar (transferler, puanlar, bonuslar, kadro değerleri) kalıcı olarak silinir. Bu işlem geri alınamaz. Emin değilsen önce yedek indir.</div>
+      <button class="danger del-league" style="flex:0 0 auto;">Bu ligi sil</button>
+    </div>
+  `);
+  card.querySelector('.del-league').onclick = () => openDeleteLeagueModal(lg);
+  return card;
+}
+
+function openDeleteLeagueModal(lg){
+  const overlay = el(`<div class="overlay"></div>`);
+  const modal = el(`
+    <div class="modal" style="max-width:440px;">
+      <h3>"${escapeHtml(lg.name)}" silinsin mi?</h3>
+      <p class="sub" style="margin-top:-6px;">Ligdeki ${(lg.transfers || []).length} transfer ve diğer tüm kayıtlar kalıcı olarak silinecek. Onaylamak için lig adını aşağıya aynen yaz.</p>
+      <div class="field"><input class="confirm-name" placeholder="${escapeHtml(lg.name)}" autocomplete="off"></div>
+      <div class="row">
+        <button class="cancel" style="flex:1;">Vazgeç</button>
+        <button class="danger go" style="flex:1;" disabled>Kalıcı olarak sil</button>
+      </div>
+    </div>
+  `);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  const input = modal.querySelector('.confirm-name');
+  const go = modal.querySelector('.go');
+  input.focus();
+  input.oninput = () => { go.disabled = input.value.trim() !== lg.name.trim(); };
+  modal.querySelector('.cancel').onclick = () => overlay.remove();
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  go.onclick = async () => {
+    go.disabled = true;
+    const ok = await deleteLeague(lg.id);
+    if (!ok) { go.disabled = false; return; }
+    overlay.remove();
+    state.leagues = await listLeagues();
+    if (state.leagues.length) {
+      state.current = await loadLeague(state.leagues[0].id);
+      setLastLeagueId(state.current.id);
+    } else {
+      state.current = null;
+      try { localStorage.removeItem('kd_last_league'); } catch(e){}
+    }
+    state.tab = 'kurulum';
+    recompute(); render();
+    toast(`"${lg.name}" silindi.`);
+  };
+}
+
+async function deleteLeague(id){
+  if (!db) { toast('Depolama kullanılamıyor.'); return false; }
+  try { await db.doc('leagues/' + id).delete(); return true; }
+  catch(e){ console.error(e); toast('Lig silinemedi, tekrar dene.'); return false; }
+}
+
+function renderBackupCard(){
+  const card = el(`
+    <div class="card">
+      <h2>Yedekleme</h2>
+      <div class="sub">${isLocal
+        ? 'Verilerin sadece bu cihazdaki tarayıcıda saklanıyor, kimseyle paylaşılmıyor. Tarayıcı verilerini silersen kaybolur. Düzenli yedek al; telefon ile bilgisayar arasında taşımak için de yedek dosyasını kullan.'
+        : 'Tüm liglerini tek bir dosyaya yedekle ya da bir yedek dosyasını geri yükle.'}</div>
+      <div class="row">
+        <button class="bk-down" style="flex:0 0 auto;">Yedek indir</button>
+        <button class="bk-up" style="flex:0 0 auto;">Yedekten geri yükle</button>
+        <input type="file" accept=".json,application/json" style="display:none;">
+      </div>
+    </div>
+  `);
+  const fileIn = card.querySelector('input[type=file]');
+  card.querySelector('.bk-down').onclick = async () => {
+    if (!downloadsCap) { toast('İndirme bu görünümde desteklenmiyor.'); return; }
+    const leagues = [];
+    for (const l of await listLeagues()) { const full = await loadLeague(l.id); if (full) leagues.push(full); }
+    const payload = { app: 'cetele', version: 1, exportedAt: nowIso(), leagues };
+    const d = new Date();
+    const stamp = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    try { await downloadsCap.save({ filename: `cetele_yedek_${stamp}.json`, data: JSON.stringify(payload) }); }
+    catch(e){ toast('İndirme iptal edildi veya başarısız.'); }
+  };
+  card.querySelector('.bk-up').onclick = () => fileIn.click();
+  fileIn.onchange = async () => {
+    const f = fileIn.files && fileIn.files[0];
+    fileIn.value = '';
+    if (!f) return;
+    let payload;
+    try { payload = JSON.parse(await f.text()); } catch(e){ toast('Dosya okunamadı.'); return; }
+    if (!payload || payload.app !== 'cetele' || !Array.isArray(payload.leagues)) { toast('Bu bir ÇETELE yedek dosyası değil.'); return; }
+    const existing = new Set((await listLeagues()).map(l => l.id));
+    const overwrite = payload.leagues.filter(l => existing.has(l.id)).length;
+    const ok = await showConfirm(`${payload.leagues.length} lig yüklenecek${overwrite ? `, bunlardan ${overwrite} tanesi bu cihazdaki aynı ligin üzerine yazılacak` : ''}. Devam edilsin mi?`, 'Geri yükle', false);
+    if (!ok) return;
+    for (const l of payload.leagues) {
+      if (!l || !l.id) continue;
+      const { id, ...body } = l;
+      await db.doc('leagues/' + id).set(body);
+    }
+    state.leagues = await listLeagues();
+    const first = payload.leagues[0];
+    if (first && first.id) { state.current = await loadLeague(first.id); setLastLeagueId(first.id); }
+    recompute(); render();
+    toast('Yedek geri yüklendi.');
+  };
+  return card;
+}
+
+// ---------- TRANSFERLER ----------
+function renderTransferler(){
+  const lg = state.current;
+  const wrap = el(`<div></div>`);
+
+  const inputCard = el(`
+    <div class="card">
+      <h2>Yeni transfer ekle</h2>
+      <div class="sub">${sampleFn ? 'Ekran görüntüsünü ya da metni yapıştır — kaydetmeden önce bir önizleme tablosunda kontrol edersin.' : 'Comunio\'nun transfer haberlerindeki metni kopyalayıp yapıştır. Birden fazla haberi tek seferde yapıştırabilirsin; kaydetmeden önce önizleme tablosunda kontrol edersin.'}</div>
+      <div class="intake"></div>
+      <div class="field" style="margin-top:14px;">
+        <label>${sampleFn ? 'ya da transfer metnini yapıştır' : 'Transfer metni'} (İngilizce ya da Türkçe format)</label>
+        <textarea id="paste-area" rows="4" placeholder="Marco Asensio transfers for 60,000,000 from Computer to Ayucukk."></textarea>
+      </div>
+      <button id="parse-text-btn">Metni ayrıştır</button>
+    </div>
+  `);
+  wrap.appendChild(inputCard);
+  if (sampleFn) inputCard.querySelector('.intake').appendChild(imageIntake(files => handleScreenshotUpload(files)));
+  inputCard.querySelector('#parse-text-btn').onclick = () => {
+    const text = inputCard.querySelector('#paste-area').value;
+    const parsed = parseTransferText(text);
+    if (!parsed.length) { toast('Hiçbir transfer satırı tanınamadı, formatı kontrol et.'); return; }
+    openPreviewModal(parsed);
+  };
+
+  const listCard = el(`
+    <div class="card">
+      <h2>Tüm transferler <span class="muted small">(${(lg.transfers||[]).length})</span></h2>
+      <div class="sub">Sütun başlıklarına tıklayarak sırala ve filtrele. Takım düğmeleri, seçili takımların alış ve satışlarını gösterir.</div>
+      <div id="transfer-table"></div>
+    </div>
+  `);
+  wrap.appendChild(listCard);
+  renderTransferTable(listCard.querySelector('#transfer-table'));
+  return wrap;
+}
+
+// ---------- transfer table: Excel-style sort & filter ----------
+const TR_COLS = [
+  { key: 'player', label: 'Oyuncu' },
+  { key: 'from', label: 'Kimden' },
+  { key: 'to', label: 'Kime' },
+  { key: 'amount', label: 'Bedel', num: true },
+];
+let menuCleanup = null;
+function closeMenu(){ if (menuCleanup) { const f = menuCleanup; menuCleanup = null; f(); } }
+
+function applyTrView(all, v, exceptCol){
+  const rows = all.filter(tr => {
+    for (const col of ['player', 'from', 'to']) {
+      if (col === exceptCol) continue;
+      const f = v.filters[col];
+      if (f && !f.includes(tr[col])) return false;
+    }
+    if (exceptCol !== 'amount') {
+      if (v.amtMin != null && tr.amount < v.amtMin) return false;
+      if (v.amtMax != null && tr.amount > v.amtMax) return false;
+    }
+    if (v.teams.length && !(v.teams.includes(tr.from) || v.teams.includes(tr.to))) return false;
+    return true;
+  });
+  const dir = v.sortDir === 'asc' ? 1 : -1;
+  const k = v.sortKey;
+  rows.sort((a, b) => {
+    if (k === 'amount') return (a.amount - b.amount) * dir;
+    if (k === 'addedAt') return (a.addedAt || '').localeCompare(b.addedAt || '') * dir;
+    return String(a[k]).localeCompare(String(b[k]), 'tr', { sensitivity: 'base' }) * dir
+      || (b.addedAt || '').localeCompare(a.addedAt || '');
+  });
+  return rows;
+}
+
+function isColFiltered(v, col){
+  if (col === 'amount') return v.amtMin != null || v.amtMax != null;
+  return !!v.filters[col];
+}
+
+function renderTransferTable(host){
+  closeMenu();
+  const lg = state.current;
+  const v = state.trView;
+  host.innerHTML = '';
+  const all = lg.transfers || [];
+  if (!all.length) { host.appendChild(el(`<div class="empty">Henüz transfer kaydı yok.</div>`)); return; }
+
+  const chips = el(`<div class="chips"><span class="small muted">Takım:</span></div>`);
+  lg.teams.forEach(t => {
+    const on = v.teams.includes(t);
+    const b = el(`<button class="chip ${on ? 'on' : ''}" aria-pressed="${on}">${escapeHtml(t)}</button>`);
+    b.onclick = () => { v.teams = on ? v.teams.filter(x => x !== t) : [...v.teams, t]; renderTransferTable(host); };
+    chips.appendChild(b);
+  });
+  host.appendChild(chips);
+
+  const rows = applyTrView(all, v, null);
+  const total = rows.reduce((a, r) => a + r.amount, 0);
+  const anyActive = v.teams.length || ['player', 'from', 'to', 'amount'].some(c => isColFiltered(v, c)) || v.sortKey !== 'addedAt';
+  const summary = el(`<div class="summary-line"><span><strong style="color:var(--text);">${rows.length}</strong> / ${all.length} transfer gösteriliyor, toplam bedel <strong class="num" style="color:var(--text);">${fmt(total)} €</strong></span></div>`);
+  if (anyActive) {
+    const reset = el(`<button class="ghost small" style="color:var(--accent);">Filtreleri ve sıralamayı sıfırla</button>`);
+    reset.onclick = () => {
+      state.trView = { sortKey: 'addedAt', sortDir: 'desc', filters: { player: null, from: null, to: null }, teams: [], amtMin: null, amtMax: null };
+      renderTransferTable(host);
+    };
+    summary.appendChild(reset);
+  }
+  host.appendChild(summary);
+
+  const t = el(`<div style="overflow-x:auto;"><table class="data"><thead><tr></tr></thead><tbody></tbody></table></div>`);
+  const headRow = t.querySelector('thead tr');
+  TR_COLS.forEach(c => {
+    const sorted = v.sortKey === c.key;
+    const filtered = isColFiltered(v, c.key);
+    const ind = sorted ? (v.sortDir === 'asc' ? '↑' : '↓') : '▾';
+    const th = el(`<th class="${c.num ? 'amt' : ''}"><button class="fh-btn ${sorted || filtered ? 'active' : ''}" aria-haspopup="dialog">
+      ${c.label}${filtered ? '<span class="fdot" title="Filtre uygulandı"></span>' : ''}<span class="ind">${ind}</span></button></th>`);
+    th.querySelector('button').onclick = (e) => { e.stopPropagation(); openColumnMenu(e.currentTarget, c, host); };
+    headRow.appendChild(th);
+  });
+  headRow.appendChild(el(`<th></th>`));
+
+  const tbody = t.querySelector('tbody');
+  if (!rows.length) tbody.appendChild(el(`<tr><td colspan="5" class="empty">Filtrelere uyan transfer yok.</td></tr>`));
+  rows.forEach(tr => {
+    const row = el(`<tr>
+      <td>${escapeHtml(tr.player)}</td>
+      <td>${escapeHtml(tr.from)}</td>
+      <td>${escapeHtml(tr.to)}</td>
+      <td class="amt num">${fmt(tr.amount)}</td>
+      <td style="text-align:right;"><button class="icon-btn" title="Sil">✕</button></td>
+    </tr>`);
+    row.querySelector('button').onclick = async () => {
+      const ok = await showConfirm('Bu transferi silmek istediğine emin misin?');
+      if (!ok) return;
+      lg.transfers = lg.transfers.filter(x => x.id !== tr.id);
+      await persist();
+    };
+    tbody.appendChild(row);
+  });
+  host.appendChild(t);
+}
+
+function openColumnMenu(anchor, col, host){
+  closeMenu();
+  const lg = state.current;
+  const v = state.trView;
+  const menu = el(`<div class="colmenu" role="dialog" aria-label="${col.label} sütunu"></div>`);
+  const asc = el(`<button class="menu-item">${col.num ? 'Küçükten büyüğe sırala' : 'A → Z sırala'}</button>`);
+  const desc = el(`<button class="menu-item">${col.num ? 'Büyükten küçüğe sırala' : 'Z → A sırala'}</button>`);
+  asc.onclick = () => { v.sortKey = col.key; v.sortDir = 'asc'; renderTransferTable(host); };
+  desc.onclick = () => { v.sortKey = col.key; v.sortDir = 'desc'; renderTransferTable(host); };
+  menu.append(asc, desc, el(`<div class="menu-sep"></div>`));
+
+  let apply, clear;
+  if (col.num) {
+    const box = el(`<div>
+      <div class="field"><label>En az</label><input class="num mn" value="${v.amtMin ?? ''}" placeholder="örn. 1.000.000"></div>
+      <div class="field"><label>En çok</label><input class="num mx" value="${v.amtMax ?? ''}" placeholder="boş = sınırsız"></div>
+    </div>`);
+    menu.appendChild(box);
+    apply = () => { v.amtMin = toNum(box.querySelector('.mn').value); v.amtMax = toNum(box.querySelector('.mx').value); renderTransferTable(host); };
+    clear = () => { v.amtMin = null; v.amtMax = null; renderTransferTable(host); };
+  } else {
+    const base = applyTrView(lg.transfers || [], v, col.key);
+    const counts = new Map();
+    base.forEach(r => counts.set(r[col.key], (counts.get(r[col.key]) || 0) + 1));
+    const values = [...counts.keys()].sort((a, b) => String(a).localeCompare(String(b), 'tr', { sensitivity: 'base' }));
+    const sel = new Set(v.filters[col.key] ? v.filters[col.key].filter(x => counts.has(x)) : values);
+    const box = el(`<div>
+      <input class="search" placeholder="Ara…" style="margin-bottom:6px;">
+      <label class="chk" style="font-weight:600;"><input type="checkbox" class="all"> Tümünü seç</label>
+      <div class="menu-list"></div>
+    </div>`);
+    menu.appendChild(box);
+    const list = box.querySelector('.menu-list');
+    const allBox = box.querySelector('.all');
+    const search = box.querySelector('.search');
+    const visible = () => values.filter(x => normName(x).includes(normName(search.value)));
+    function syncAll(){
+      const vis = visible();
+      allBox.checked = vis.length > 0 && vis.every(x => sel.has(x));
+      allBox.indeterminate = !allBox.checked && vis.some(x => sel.has(x));
+    }
+    function drawList(){
+      list.innerHTML = '';
+      const vis = visible();
+      if (!vis.length) list.appendChild(el(`<div class="small muted" style="padding:6px;">Sonuç yok</div>`));
+      vis.forEach(x => {
+        const item = el(`<label class="chk"><input type="checkbox" ${sel.has(x) ? 'checked' : ''}><span style="flex:1;">${escapeHtml(x)}</span><span class="small muted">${counts.get(x)}</span></label>`);
+        item.querySelector('input').onchange = (e) => { if (e.target.checked) sel.add(x); else sel.delete(x); syncAll(); };
+        list.appendChild(item);
+      });
+      syncAll();
+    }
+    search.oninput = drawList;
+    allBox.onchange = () => { visible().forEach(x => allBox.checked ? sel.add(x) : sel.delete(x)); drawList(); };
+    drawList();
+    apply = () => {
+      if (!sel.size) { toast('En az bir değer seç.'); return; }
+      v.filters[col.key] = values.every(x => sel.has(x)) ? null : [...sel];
+      renderTransferTable(host);
+    };
+    clear = () => { v.filters[col.key] = null; renderTransferTable(host); };
+  }
+  const actions = el(`<div class="row" style="margin-top:4px;"><button class="clr" style="flex:1;">Temizle</button><button class="primary ok" style="flex:1;">Uygula</button></div>`);
+  actions.querySelector('.clr').onclick = clear;
+  actions.querySelector('.ok').onclick = apply;
+  menu.appendChild(actions);
+
+  document.body.appendChild(menu);
+  const r = anchor.getBoundingClientRect();
+  const w = menu.offsetWidth;
+  menu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + 'px';
+  const top = r.bottom + 6;
+  const h = menu.offsetHeight;
+  menu.style.top = (top + h > window.innerHeight - 8 ? Math.max(8, r.top - h - 6) : top) + 'px';
+  const first = menu.querySelector('.search') || menu.querySelector('input') || asc;
+  first.focus();
+
+  const onDown = (e) => { if (!menu.contains(e.target)) closeMenu(); };
+  const onKey = (e) => { if (e.key === 'Escape') closeMenu(); };
+  const onScroll = (e) => { if (!menu.contains(e.target)) closeMenu(); };
+  setTimeout(() => {
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('touchstart', onDown, { passive: true });
+  }, 0);
+  document.addEventListener('keydown', onKey);
+  window.addEventListener('scroll', onScroll, true);
+  window.addEventListener('resize', closeMenu);
+  menuCleanup = () => {
+    document.removeEventListener('mousedown', onDown);
+    document.removeEventListener('touchstart', onDown);
+    document.removeEventListener('keydown', onKey);
+    window.removeEventListener('scroll', onScroll, true);
+    window.removeEventListener('resize', closeMenu);
+    menu.remove();
+  };
+}
+
+function parseTransferText(text){
+  const results = [];
+  if (!text) return results;
+  const flat = text.replace(/\r/g,'');
+
+  // Format A: "Player transfers for 1,234,567 from A to B."
+  const reA = /([A-Za-zÇĞİÖŞÜçğıöşü0-9'’.\-\s]+?)\s+transfers\s+for\s+([\d.,]+)\s+from\s+([A-Za-zÇĞİÖŞÜçğıöşü0-9'’.\-\s]+?)\s+to\s+([A-Za-zÇĞİÖŞÜçğıöşü0-9'’.\-\s]+?)\s*[\.\n]/gi;
+  let m;
+  while ((m = reA.exec(flat + '\n')) !== null) {
+    results.push({ player: m[1].trim(), amount: parseAmount(m[2]), from: m[3].trim(), to: m[4].trim() });
+  }
+  if (results.length) return results;
+
+  // Format B (Turkish native): "Player 1.234.567 bonservis bedeli ile A'dan/A'den B'a/B'e transfer oldu."
+  const reB = /([A-Za-zÇĞİÖŞÜçğıöşü0-9'’.\-\s]+?)\s+([\d.,]+)\s+bonservis bedeli ile\s+([A-Za-zÇĞİÖŞÜçğıöşü0-9\-\s]+?)['’](?:dan|den|tan|ten)\s+([A-Za-zÇĞİÖŞÜçğıöşü0-9\-\s]+?)['’](?:a|e|ya|ye)?\s*transfer oldu/gi;
+  while ((m = reB.exec(flat)) !== null) {
+    results.push({ player: m[1].trim(), amount: parseAmount(m[2]), from: m[3].trim(), to: m[4].trim() });
+  }
+  return results;
+}
+
+async function handleScreenshotUpload(files){
+  if (!sampleFn) { toast('Görsel okuma bu görünümde kullanılamıyor.'); return; }
+  if (busy) return;
+  files = limitFiles(files);
+  busy = true;
+  const close = showBusy('Transfer görüntüsü okunuyor…');
+  try {
+    const prompt = `Bu görsel(ler), bir fantezi futbol ligi (Comunio) oyununun transfer bildirim ekranı. Görselde geçen HER transfer satırını eksiksiz çıkar.
+Her satır iki formattan birinde olabilir:
+1) "PlayerName transfers for 1,234,567 from A to B."
+2) Türkçe: "PlayerName 1.234.567 bonservis bedeli ile A'dan B'a transfer oldu." (başında "04:33 -" gibi bir saat olabilir, onu yok say)
+Yalnızca şu JSON dizisini döndür, başka metin yazma:
+[{"player": "...", "amount": 1234567, "from": "...", "to": "..."}]
+- amount tam sayı olmalı (nokta/virgül ayraçları kaldırılmış). Rakamları çok dikkatli oku.
+- from ve to: takım/hesap adlarını Türkçe ekler olmadan, görseldeki gibi birebir yaz ("Sikici Hamsi'a" → "Sikici Hamsi").
+- Hiç transfer satırı yoksa [] döndür.`;
+    const data = await sampleFn.json(prompt, { images: files });
+    const arr = Array.isArray(data) ? data : (data && Array.isArray(data.transfers) ? data.transfers : []);
+    const parsed = arr.map(x => ({
+      player: String(x.player || '').trim(),
+      amount: toNum(x.amount),
+      from: String(x.from || '').trim(),
+      to: String(x.to || '').trim(),
+    })).filter(x => x.player && x.from && x.to && x.amount != null);
+    close();
+    if (!parsed.length) { toast('Görselde transfer satırı bulunamadı.'); return; }
+    openPreviewModal(parsed);
+  } catch(e){
+    console.error(e);
+    close();
+    toast(sampleErrorText(e));
+  } finally {
+    busy = false;
+    close();
+  }
+}
+
+// ---------- standings screenshot (points + squad values) ----------
+async function handleStandingsScreenshot(files, purpose){
+  if (!sampleFn) { toast('Görsel okuma bu görünümde kullanılamıyor.'); return; }
+  if (busy) return;
+  files = limitFiles(files);
+  busy = true;
+  const close = showBusy('Sıralama görüntüsü okunuyor…');
+  try {
+    const prompt = `Bu görsel(ler), bir Comunio fantezi futbol liginin sıralama/puan ekranı.
+Her satırda: solda sıra numarası (ve yukarı/aşağı ok), ortada kalın yazıyla TAKIM ADI ve onun altında küçük gri yazıyla KADRO DEĞERİ (ör. 102.220.000), sağda ise puan rozetleri olabilir.
+Puan rozetleri:
+- İçi boş, çerçeveli yuvarlak rozet = o haftanın puanı (weekly)
+- İçi dolu yeşil rozet = toplam sezon puanı (total)
+Sadece bir rozet varsa: çerçeveliyse weekly, doluysa total. Hiç rozet yoksa ikisi de null.
+Takım adının yanındaki ikonları (kalkan vb.) ve sıra numaralarını yok say.
+Satırları görseldeki sırayla (yukarıdan aşağı) listele. Yalnızca şu JSON dizisini döndür, başka metin yazma:
+[{"team": "...", "squadValue": 102220000, "weekly": 63, "total": null}]
+Sayılar tam sayı olmalı (ayraçsız); okunamayan alana null yaz. Rakamları çok dikkatli oku.`;
+    const data = await sampleFn.json(prompt, { images: files });
+    const arr = Array.isArray(data) ? data : (data && Array.isArray(data.teams) ? data.teams : []);
+    const rows = arr.map(x => ({
+      src: String(x.team || '').trim(),
+      squad: toNum(x.squadValue),
+      weekly: toNum(x.weekly),
+      total: toNum(x.total),
+    })).filter(r => r.src);
+    close();
+    if (!rows.length) { toast('Görselde takım satırı bulunamadı.'); return; }
+    openStandingsModal(rows, purpose);
+  } catch(e){
+    console.error(e);
+    close();
+    toast(sampleErrorText(e));
+  } finally {
+    busy = false;
+    close();
+  }
+}
+
+function normName(s){ return String(s || '').toLocaleLowerCase('tr').replace(/\s+/g, ' ').trim(); }
+function matchTeam(lg, name){
+  const n = normName(name);
+  if (!n) return '';
+  return lg.teams.find(t => normName(t) === n)
+    || lg.teams.find(t => normName(t).includes(n) || n.includes(normName(t)))
+    || '';
+}
+function currentCumulative(lg, team){
+  let cum = 0;
+  (lg.pointsLog || []).filter(p => p.team === team)
+    .slice().sort((a,b) => (a.addedAt||'').localeCompare(b.addedAt||''))
+    .forEach(p => { cum = p.mode === 'cumulative' ? p.value : cum + p.value; });
+  return cum;
+}
+
+function openStandingsModal(rows, purpose){
+  const lg = state.current;
+  const isPoints = purpose === 'points';
+  const hasWeekly = rows.some(r => r.weekly != null);
+  const hasTotal = rows.some(r => r.total != null);
+  const hasSquad = rows.some(r => r.squad != null);
+  if (isPoints && !hasWeekly && !hasTotal) toast('Görselde puan rozeti okunamadı, değerleri elle girebilirsin.');
+  const model = rows.map(r => ({ ...r, team: matchTeam(lg, r.src), include: true }));
+  const opt = { mode: (hasWeekly || !hasTotal) ? 'weekly' : 'cumulative', label: '' };
+
+  const overlay = el(`<div class="overlay"></div>`);
+  const modal = el(`
+    <div class="modal" style="max-width:780px;">
+      <h3>${isPoints ? 'Puan önizlemesi' : 'Kadro değeri önizlemesi'}</h3>
+      <p class="sub" style="margin-top:-8px;">Görselden okunan değerleri kontrol et, gerekirse düzelt. Eşleşmeyen takımları listeden seç.</p>
+      ${isPoints ? `
+        <div class="grid2">
+          <div class="field"><label>Etiket (örn. "3. hafta")</label><input id="sm-label" placeholder="opsiyonel"></div>
+          <div class="field"><label>Hangi puan işlensin?</label>
+            <select id="sm-mode">
+              <option value="weekly" ${opt.mode==='weekly'?'selected':''}>Haftalık puan (çerçeveli rozet)</option>
+              <option value="cumulative" ${opt.mode==='cumulative'?'selected':''}>Toplam puan (dolu rozet), sadece fark işlenir</option>
+            </select>
+          </div>
+        </div>
+        ${hasSquad ? `<label class="chk"><input type="checkbox" id="sm-squad" checked> Kadro değerlerini de güncelle</label>` : ''}
+        ${lg.adminBonusEnabled ? `<label class="chk"><input type="checkbox" id="sm-rank"> Bu sıralamayı sıralama bonusu olarak da kaydet (görseldeki sıra kullanılır)</label>` : ''}
+      ` : ''}
+      <div style="overflow-x:auto;margin-top:6px;">
+        <table class="data preview-table">
+          <thead><tr><th></th><th>Görseldeki ad</th><th>Takım</th>${isPoints ? '<th class="amt">Haftalık</th><th class="amt">Toplam</th>' : ''}<th class="amt">Kadro değeri</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="row" style="margin-top:16px;">
+        <button id="sm-cancel" style="flex:0 0 auto;">Vazgeç</button>
+        <div style="flex:1;"></div>
+        <button class="primary" id="sm-save" style="flex:0 0 auto;">Kaydet</button>
+      </div>
+    </div>
+  `);
+  const tbody = modal.querySelector('tbody');
+  const pointVal = r => opt.mode === 'weekly' ? r.weekly : r.total;
+  function isDup(r){
+    if (!isPoints || !r.team) return false;
+    const v = pointVal(r);
+    if (v == null) return false;
+    const log = lg.pointsLog || [];
+    if (log.some(p => p.team === r.team && p.mode === opt.mode && p.value === v && (p.label || '') === opt.label)) return true;
+    if (opt.mode === 'cumulative' && log.some(p => p.team === r.team) && currentCumulative(lg, r.team) === v) return true;
+    return false;
+  }
+  function resetIncludes(){ model.forEach(r => { r.include = !!r.team && !isDup(r); }); }
+  function renderRows(){
+    tbody.innerHTML = '';
+    model.forEach(r => {
+      const dup = isDup(r);
+      const tr = el(`<tr style="${dup ? 'opacity:.55;' : ''}">
+        <td><input type="checkbox" class="inc" style="width:auto;" ${r.include ? 'checked' : ''}></td>
+        <td>${escapeHtml(r.src)}${dup ? '<div class="small muted">⚠ olası mükerrer</div>' : ''}${!r.team ? '<div class="small muted">eşleşmedi</div>' : ''}</td>
+        <td><select class="tm"><option value="">— atla —</option>${lg.teams.map(t => `<option value="${escapeHtml(t)}" ${r.team === t ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('')}</select></td>
+        ${isPoints ? `<td class="amt"><input class="num wk" value="${r.weekly ?? ''}" style="text-align:right;width:70px;"></td>
+        <td class="amt"><input class="num tt" value="${r.total ?? ''}" style="text-align:right;width:70px;"></td>` : ''}
+        <td class="amt"><input class="num sq" value="${r.squad ?? ''}" style="text-align:right;min-width:120px;"></td>
+      </tr>`);
+      tr.querySelector('.inc').onchange = e => { r.include = e.target.checked; };
+      tr.querySelector('.tm').onchange = e => { r.team = e.target.value; r.include = !!r.team && !isDup(r); renderRows(); };
+      if (isPoints) {
+        tr.querySelector('.wk').oninput = e => { r.weekly = toNum(e.target.value); };
+        tr.querySelector('.tt').oninput = e => { r.total = toNum(e.target.value); };
+      }
+      tr.querySelector('.sq').oninput = e => { r.squad = toNum(e.target.value); };
+      tbody.appendChild(tr);
+    });
+  }
+  resetIncludes();
+  renderRows();
+  if (isPoints) {
+    modal.querySelector('#sm-label').oninput = e => { opt.label = e.target.value.trim(); resetIncludes(); renderRows(); };
+    modal.querySelector('#sm-mode').onchange = e => { opt.mode = e.target.value; resetIncludes(); renderRows(); };
+  }
+  modal.querySelector('#sm-cancel').onclick = () => overlay.remove();
+  modal.querySelector('#sm-save').onclick = async () => {
+    const chosen = model.filter(r => r.include && r.team);
+    if (!chosen.length) { toast('Kaydedilecek satır seçilmedi.'); return; }
+    const seen = new Set();
+    for (const r of chosen) {
+      if (seen.has(r.team)) { toast(`"${r.team}" birden fazla satırda seçili.`); return; }
+      seen.add(r.team);
+    }
+    const parts = [];
+    const base = Date.now();
+    if (isPoints) {
+      lg.pointsLog = lg.pointsLog || [];
+      let n = 0;
+      chosen.forEach((r, i) => {
+        const v = pointVal(r);
+        if (v == null) return;
+        lg.pointsLog.push({ id: uid(), team: r.team, mode: opt.mode, value: v, label: opt.label, addedAt: new Date(base + i).toISOString() });
+        n++;
+      });
+      if (n) parts.push(`${n} takımın puanı işlendi`);
+    }
+    const squadBox = modal.querySelector('#sm-squad');
+    const doSquad = isPoints ? !!(squadBox && squadBox.checked) : true;
+    if (doSquad) {
+      lg.squadValues = lg.squadValues || {};
+      let n = 0;
+      chosen.forEach(r => { if (r.squad != null) { lg.squadValues[r.team] = { value: r.squad, updatedAt: nowIso() }; n++; } });
+      if (n) parts.push(`${n} kadro değeri güncellendi`);
+    }
+    const rankBox = modal.querySelector('#sm-rank');
+    if (rankBox && rankBox.checked) {
+      const ranking = [...new Set(model.filter(r => r.team).map(r => r.team))];
+      if (ranking.length !== lg.teams.length) {
+        parts.push('sıralama bonusu kaydedilmedi (tüm takımlar eşleşmeli)');
+      } else {
+        lg.adminBonusLog = lg.adminBonusLog || [];
+        lg.adminBonusLog.push({ id: uid(), ranking, label: opt.label, addedAt: nowIso() });
+        parts.push('sıralama bonusu kaydedildi');
+      }
+    }
+    overlay.remove();
+    await persist();
+    toast(parts.length ? parts.join(', ') + '.' : 'Değişiklik yapılmadı.');
+  };
+  overlay.appendChild(modal);
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
+function isDuplicateTransfer(lg, tr){
+  return (lg.transfers || []).some(x =>
+    x.player.trim().toLowerCase() === tr.player.trim().toLowerCase() &&
+    Math.abs(x.amount) === Math.abs(tr.amount) &&
+    x.from.trim().toLowerCase() === tr.from.trim().toLowerCase() &&
+    x.to.trim().toLowerCase() === tr.to.trim().toLowerCase()
+  );
+}
+
+function openPreviewModal(parsedRows){
+  const lg = state.current;
+  const rows = parsedRows.map(r => ({ ...r, _dup: isDuplicateTransfer(lg, r), _include: !isDuplicateTransfer(lg, r) }));
+  const overlay = el(`<div class="overlay"></div>`);
+  const modal = el(`
+    <div class="modal">
+      <h3>Transfer Önizlemesi (${rows.length} satır)</h3>
+      <p class="sub" style="margin-top:-8px;">Mükerrer olabilecek satırlar işaretlendi ve varsayılan olarak devre dışı bırakıldı. Kaydetmeden önce gözden geçir.</p>
+      <div style="overflow-x:auto;">
+        <table class="data preview-table">
+          <thead><tr><th></th><th>Oyuncu</th><th>Kimden</th><th>Kime</th><th class="amt">Bedel</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="row" style="margin-top:16px;">
+        <button id="cancel-preview" style="flex:0 0 auto;">İptal</button>
+        <div style="flex:1;"></div>
+        <button class="primary" id="confirm-preview" style="flex:0 0 auto;">Seçilenleri Kaydet</button>
+      </div>
+    </div>
+  `);
+  const tbody = modal.querySelector('tbody');
+  function renderRows(){
+    tbody.innerHTML = '';
+    rows.forEach((r, i) => {
+      const tr = el(`<tr style="${r._dup ? 'opacity:.55;' : ''}">
+        <td><input type="checkbox" ${r._include?'checked':''} style="width:auto;"></td>
+        <td><input value="${escapeHtml(r.player)}"></td>
+        <td><input value="${escapeHtml(r.from)}"></td>
+        <td><input value="${escapeHtml(r.to)}"></td>
+        <td class="amt"><input class="num" value="${r.amount}" style="text-align:right;"></td>
+        <td><button class="icon-btn" title="Satırı kaldır">✕</button></td>
+      </tr>`);
+      const [chk, playerI, fromI, toI, amtI] = tr.querySelectorAll('input');
+      chk.onchange = () => rows[i]._include = chk.checked;
+      playerI.oninput = () => rows[i].player = playerI.value;
+      fromI.oninput = () => rows[i].from = fromI.value;
+      toI.oninput = () => rows[i].to = toI.value;
+      amtI.oninput = () => rows[i].amount = parseAmount(amtI.value);
+      tr.querySelector('button').onclick = () => { rows.splice(i,1); renderRows(); };
+      if (r._dup) {
+        const dupTd = tr.children[1];
+        dupTd.appendChild(el(`<div class="small muted">⚠ olası mükerrer</div>`));
+      }
+      tbody.appendChild(tr);
+    });
+    if (!rows.length) tbody.appendChild(el(`<tr><td colspan="6" class="empty">Satır kalmadı.</td></tr>`));
+  }
+  renderRows();
+  modal.querySelector('#cancel-preview').onclick = () => overlay.remove();
+  modal.querySelector('#confirm-preview').onclick = async () => {
+    const toAdd = rows.filter(r => r._include && r.player && r.from && r.to && !isNaN(r.amount));
+    if (!toAdd.length) { toast('Kaydedilecek satır seçilmedi.'); return; }
+    lg.transfers = lg.transfers || [];
+    toAdd.forEach(r => {
+      lg.transfers.push({ id: uid(), player: r.player.trim(), amount: Math.abs(r.amount), from: r.from.trim(), to: r.to.trim(), addedAt: nowIso() });
+    });
+    overlay.remove();
+    await persist();
+    toast(`${toAdd.length} transfer kaydedildi.`);
+  };
+  overlay.appendChild(modal);
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
+// ---------- PUANLAR ----------
+function renderBulkPoints(lg){
+  const card = el(`
+    <div class="card">
+      <h2>Haftalık puanları gir</h2>
+      <div class="sub">Tüm takımların puanını tek tabloda gir. Puan başına ${fmt(lg.pointBonusPerPoint)} — oyunun sabit kuralı. Kadro değeri girersen maksimum teklif hesabı da güncellenir.</div>
+      <div class="grid2">
+        <div class="field"><label>Etiket (örn. "3. hafta")</label><input class="bl-label" placeholder="opsiyonel"></div>
+        <div class="field"><label>Girdiğin puan</label>
+          <select class="bl-mode">
+            <option value="weekly">Bu haftanın puanı</option>
+            <option value="cumulative">Toplam puan (sadece fark işlenir)</option>
+          </select>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data preview-table">
+          <thead><tr><th>Takım</th><th class="amt">Puan</th><th class="amt">Kadro değeri (opsiyonel)</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button class="primary bl-save" style="margin-top:12px;">Kaydet</button>
+    </div>
+  `);
+  const tbody = card.querySelector('tbody');
+  if (!lg.teams.length) tbody.appendChild(el(`<tr><td colspan="3" class="empty">Önce Lig Kurulumu sekmesinden takım ekle.</td></tr>`));
+  lg.teams.forEach(t => {
+    tbody.appendChild(el(`<tr data-team="${escapeHtml(t)}">
+      <td>${escapeHtml(t)}</td>
+      <td class="amt"><input class="num pt" inputmode="numeric" style="text-align:right;width:90px;"></td>
+      <td class="amt"><input class="num sq" inputmode="numeric" style="text-align:right;min-width:130px;"></td>
+    </tr>`));
+  });
+  card.querySelector('.bl-save').onclick = async () => {
+    const label = card.querySelector('.bl-label').value.trim();
+    const mode = card.querySelector('.bl-mode').value;
+    const entries = [];
+    tbody.querySelectorAll('tr[data-team]').forEach(tr => {
+      entries.push({ team: tr.dataset.team, pts: toNum(tr.querySelector('.pt').value), sq: toNum(tr.querySelector('.sq').value) });
+    });
+    const withPts = entries.filter(e => e.pts != null);
+    const withSq = entries.filter(e => e.sq != null);
+    if (!withPts.length && !withSq.length) { toast('En az bir değer gir.'); return; }
+    const log = lg.pointsLog || [];
+    const dups = withPts.filter(e => log.some(p => p.team === e.team && p.mode === mode && p.value === e.pts && (p.label || '') === label)
+      || (mode === 'cumulative' && log.some(p => p.team === e.team) && currentCumulative(lg, e.team) === e.pts));
+    if (dups.length) {
+      const ok = await showConfirm(`${dups.map(d => d.team).join(', ')} için aynı puan daha önce girilmiş görünüyor. Yine de kaydedilsin mi?`, 'Yine de kaydet', false);
+      if (!ok) return;
+    }
+    lg.pointsLog = log;
+    const base = Date.now();
+    withPts.forEach((e, i) => lg.pointsLog.push({ id: uid(), team: e.team, mode, value: e.pts, label, addedAt: new Date(base + i).toISOString() }));
+    lg.squadValues = lg.squadValues || {};
+    withSq.forEach(e => { lg.squadValues[e.team] = { value: e.sq, updatedAt: nowIso() }; });
+    await persist();
+    const parts = [];
+    if (withPts.length) parts.push(`${withPts.length} takımın puanı işlendi`);
+    if (withSq.length) parts.push(`${withSq.length} kadro değeri güncellendi`);
+    toast(parts.join(', ') + '.');
+  };
+  return card;
+}
+
+function renderPuanlar(){
+  const lg = state.current;
+  const wrap = el(`<div></div>`);
+  const shotCard = el(`
+    <div class="card">
+      <h2>Haftalık puanları ekran görüntüsüyle ekle</h2>
+      <div class="sub">Ligin puan sıralaması ekranını yapıştır. Tüm takımların puanı tek seferde okunur, kaydetmeden önce kontrol edersin. İstersen aynı görüntüden kadro değerleri de güncellenir.</div>
+      <div class="intake"></div>
+    </div>
+  `);
+  if (sampleFn) {
+    shotCard.querySelector('.intake').appendChild(imageIntake(files => handleStandingsScreenshot(files, 'points')));
+    wrap.appendChild(shotCard);
+  } else {
+    wrap.appendChild(renderBulkPoints(lg));
+  }
+  const formCard = el(`
+    <div class="card"><details>
+      <summary>Elle puan ekle</summary>
+      <div style="height:12px;"></div>
+      <div class="sub">Puan başına ${fmt(lg.pointBonusPerPoint)} — oyunun sabit kuralı. "Bu haftanın puanı" girersen mevcut toplama eklenir; "Toplam (kümülatif) puan" girersen sistem otomatik olarak farkı hesaplayıp sadece o farkı ödüllendirir (çift sayım olmaz).</div>
+      <div class="grid2">
+        <div class="field">
+          <label>Takım</label>
+          <select id="p-team">${lg.teams.map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}</select>
+        </div>
+        <div class="field">
+          <label>Puan türü</label>
+          <select id="p-mode">
+            <option value="weekly">Bu haftanın kazanılan puanı</option>
+            <option value="cumulative">Toplam (kümülatif) puan</option>
+          </select>
+        </div>
+        <div class="field"><label>Puan değeri</label><input id="p-value" class="num" placeholder="örn. 63"></div>
+        <div class="field"><label>Etiket (opsiyonel, örn. "3. hafta")</label><input id="p-label" placeholder="opsiyonel"></div>
+      </div>
+      <button class="primary" id="p-add">Ekle</button>
+    </details></div>
+  `);
+  wrap.appendChild(formCard);
+  formCard.querySelector('#p-add').onclick = async () => {
+    const team = formCard.querySelector('#p-team').value;
+    const mode = formCard.querySelector('#p-mode').value;
+    const value = parseAmount(formCard.querySelector('#p-value').value);
+    const label = formCard.querySelector('#p-label').value.trim();
+    if (!team || isNaN(value)) { toast('Geçerli bir puan değeri gir.'); return; }
+    lg.pointsLog = lg.pointsLog || [];
+    lg.pointsLog.push({ id: uid(), team, mode, value, label, addedAt: nowIso() });
+    await persist();
+    toast('Puan bonusu eklendi.');
+  };
+
+  const logCard = el(`<div class="card"><h2>Puan kayıtları</h2><div id="p-log"></div></div>`);
+  wrap.appendChild(logCard);
+  const logEl = logCard.querySelector('#p-log');
+  const sorted = (lg.pointsLog || []).slice().sort((a,b)=> (b.addedAt||'').localeCompare(a.addedAt||''));
+  if (!sorted.length) { logEl.appendChild(el(`<div class="empty">Henüz puan kaydı yok.</div>`)); }
+  else {
+    const t = el(`<table class="data"><thead><tr><th>Takım</th><th>Tür</th><th class="amt">Değer</th><th class="amt">Bonus</th><th></th></tr></thead><tbody></tbody></table>`);
+    const tbody = t.querySelector('tbody');
+    sorted.forEach(p => {
+      const row = el(`<tr>
+        <td>${escapeHtml(p.team)}${p.label?`<div class="small muted">${escapeHtml(p.label)}</div>`:''}</td>
+        <td>${p.mode==='cumulative'?'Toplam':'Bu hafta'}</td>
+        <td class="amt num">${p.value}</td>
+        <td class="amt num pos">+${fmt(computePointCredit(lg, p))}</td>
+        <td style="text-align:right;"><button class="icon-btn" title="Sil">✕</button></td>
+      </tr>`);
+      row.querySelector('button').onclick = async () => {
+        const ok = await showConfirm('Bu puan kaydını silmek istediğine emin misin?');
+        if (!ok) return;
+        lg.pointsLog = lg.pointsLog.filter(x => x.id !== p.id);
+        await persist();
+      };
+      tbody.appendChild(row);
+    });
+    logEl.appendChild(t);
+  }
+  return wrap;
+}
+function computePointCredit(lg, entry){
+  // recompute credited points for a single entry in its chronological context
+  const sameTeam = (lg.pointsLog||[]).filter(p=>p.team===entry.team).slice().sort((a,b)=>(a.addedAt||'').localeCompare(b.addedAt||''));
+  let cum = 0, credit = 0;
+  for (const p of sameTeam) {
+    if (p.mode === 'cumulative') { credit = p.value - cum; cum = p.value; }
+    else { credit = p.value; cum += p.value; }
+    if (p.id === entry.id) break;
+  }
+  return credit * (lg.pointBonusPerPoint || 10000);
+}
+
+// ---------- SIRALAMA (ADMIN BONUS) ----------
+function renderSiralama(){
+  const lg = state.current;
+  const wrap = el(`<div></div>`);
+  const toggleCard = el(`
+    <div class="card">
+      <h2>Sıralama (admin) bonusu</h2>
+      <div class="sub">Bu bonus oyunun kuralı değildir, tamamen opsiyoneldir — lig admininin kendi belirlediği bir prim sistemidir.</div>
+      <label style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="ab-enabled" style="width:auto;" ${lg.adminBonusEnabled?'checked':''}>
+        Bu ligde sıralama bonusu uygulanıyor
+      </label>
+    </div>
+  `);
+  wrap.appendChild(toggleCard);
+  toggleCard.querySelector('#ab-enabled').onchange = async (e) => {
+    lg.adminBonusEnabled = e.target.checked;
+    await persist();
+  };
+
+  if (lg.adminBonusEnabled) {
+    const tableCard = el(`
+      <div class="card">
+        <h2>Bonus tablosu</h2>
+        <div class="sub">Her sıra için verilecek tutarı belirle (takım sayısı kadar satır).</div>
+        <div id="ab-table"></div>
+        <button id="ab-save-table" class="primary" style="margin-top:10px;">Tabloyu Kaydet</button>
+      </div>
+    `);
+    wrap.appendChild(tableCard);
+    const tableEl = tableCard.querySelector('#ab-table');
+    const n = lg.teams.length || 0;
+    const values = [];
+    for (let i=0;i<n;i++){
+      values.push(lg.adminBonusTable[i] != null ? lg.adminBonusTable[i] : '');
+      const row = el(`<div class="row" style="align-items:center;margin-bottom:6px;">
+        <div style="flex:0 0 70px;font-weight:600;">${i+1}. sıra</div>
+        <input class="num ab-input" data-i="${i}" value="${values[i]}" placeholder="tutar">
+      </div>`);
+      tableEl.appendChild(row);
+    }
+    tableCard.querySelector('#ab-save-table').onclick = async () => {
+      const inputs = tableCard.querySelectorAll('.ab-input');
+      const table = [];
+      inputs.forEach(inp => { table[parseInt(inp.dataset.i)] = parseAmount(inp.value) || 0; });
+      lg.adminBonusTable = table;
+      await persist();
+      toast('Bonus tablosu kaydedildi.');
+    };
+
+    const entryCard = el(`
+      <div class="card">
+        <h2>Haftalık sıralama gir</h2>
+        <div class="sub">Takımları 1.'den sona doğru sürükleyerek sırala, sonra kaydet.</div>
+        <div class="field"><label>Etiket (opsiyonel, örn. "3. hafta")</label><input id="ab-label" placeholder="opsiyonel"></div>
+        <ul class="rank-list" id="rank-list"></ul>
+        <button class="primary" id="ab-add">Bu Sıralamayı Kaydet</button>
+      </div>
+    `);
+    wrap.appendChild(entryCard);
+    const rankList = entryCard.querySelector('#rank-list');
+    let order = lg.teams.slice();
+    function renderRankList(){
+      rankList.innerHTML = '';
+      order.forEach((t, i) => {
+        const li = el(`<li draggable="true" data-i="${i}"><span class="n">${i+1}</span><span style="flex:1;">${escapeHtml(t)}</span><span class="muted small">${lg.adminBonusTable[i]!=null?fmt(lg.adminBonusTable[i])+' €':''}</span></li>`);
+        li.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', i); });
+        li.addEventListener('dragover', (e) => e.preventDefault());
+        li.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const from = parseInt(e.dataTransfer.getData('text/plain'));
+          const to = i;
+          const [moved] = order.splice(from, 1);
+          order.splice(to, 0, moved);
+          renderRankList();
+        });
+        rankList.appendChild(li);
+      });
+    }
+    renderRankList();
+    entryCard.querySelector('#ab-add').onclick = async () => {
+      const label = entryCard.querySelector('#ab-label').value.trim();
+      lg.adminBonusLog = lg.adminBonusLog || [];
+      lg.adminBonusLog.push({ id: uid(), ranking: order.slice(), label, addedAt: nowIso() });
+      await persist();
+      toast('Haftalık sıralama kaydedildi.');
+    };
+
+    const logCard = el(`<div class="card"><h2>Geçmiş sıralamalar</h2><div id="ab-log"></div></div>`);
+    wrap.appendChild(logCard);
+    const logEl = logCard.querySelector('#ab-log');
+    const sorted = (lg.adminBonusLog||[]).slice().sort((a,b)=>(b.addedAt||'').localeCompare(a.addedAt||''));
+    if (!sorted.length) logEl.appendChild(el(`<div class="empty">Henüz sıralama girilmedi.</div>`));
+    else sorted.forEach(entry => {
+      const row = el(`<div class="card" style="background:var(--surface-2);margin-bottom:10px;">
+        <div class="row" style="align-items:center;">
+          <div style="flex:1;font-weight:600;">${entry.label ? escapeHtml(entry.label) : new Date(entry.addedAt).toLocaleDateString('tr-TR')}</div>
+          <button class="icon-btn" title="Sil">✕</button>
+        </div>
+        <div class="small muted" style="margin-top:6px;">${entry.ranking.map((t,i)=>`${i+1}. ${escapeHtml(t)}`).join(' · ')}</div>
+      </div>`);
+      row.querySelector('button').onclick = async () => {
+        const ok = await showConfirm('Bu sıralama kaydını silmek istediğine emin misin?');
+        if (!ok) return;
+        lg.adminBonusLog = lg.adminBonusLog.filter(x => x.id !== entry.id);
+        await persist();
+      };
+      logEl.appendChild(row);
+    });
+  }
+  return wrap;
+}
+
+// ---------- KADRO DEĞERLERİ ----------
+function renderKadro(){
+  const lg = state.current;
+  const wrap = el(`<div></div>`);
+  if (lg.teams.length && sampleFn) {
+    const shotCard = el(`
+      <div class="card">
+        <h2>Kadro değerlerini ekran görüntüsüyle güncelle</h2>
+        <div class="sub">Takımların kadro değerlerinin göründüğü sıralama ekranını yapıştır.</div>
+        <div class="intake"></div>
+      </div>
+    `);
+    shotCard.querySelector('.intake').appendChild(imageIntake(files => handleStandingsScreenshot(files, 'squad')));
+    wrap.appendChild(shotCard);
+  }
+  const card = el(`
+    <div class="card">
+      <h2>Kadro (piyasa) değerleri</h2>
+      <div class="sub">Her takımın güncel kadro değerini gir — maksimum teklif hesaplaması bu değeri kullanır.</div>
+      <div id="squad-rows"></div>
+    </div>
+  `);
+  wrap.appendChild(card);
+  const rows = card.querySelector('#squad-rows');
+  if (!lg.teams.length) { rows.appendChild(el(`<div class="empty">Önce Lig Kurulumu sekmesinden takım ekle.</div>`)); return wrap; }
+  lg.teams.forEach(t => {
+    const current = (lg.squadValues && lg.squadValues[t] && lg.squadValues[t].value) || '';
+    const updated = (lg.squadValues && lg.squadValues[t] && lg.squadValues[t].updatedAt) ? new Date(lg.squadValues[t].updatedAt).toLocaleDateString('tr-TR') : '—';
+    const row = el(`<div class="row" style="align-items:center;margin-bottom:8px;">
+      <div style="flex:1;font-weight:600;">${escapeHtml(t)}</div>
+      <input class="num sq-input" data-team="${escapeHtml(t)}" value="${current}" placeholder="kadro değeri" style="flex:1;">
+      <div class="small muted" style="flex:0 0 100px;">güncelleme: ${updated}</div>
+    </div>`);
+    rows.appendChild(row);
+  });
+  const saveBtn = el(`<button class="primary" style="margin-top:8px;">Tümünü Kaydet</button>`);
+  card.appendChild(saveBtn);
+  saveBtn.onclick = async () => {
+    lg.squadValues = lg.squadValues || {};
+    card.querySelectorAll('.sq-input').forEach(inp => {
+      const v = parseAmount(inp.value);
+      if (!isNaN(v)) lg.squadValues[inp.dataset.team] = { value: v, updatedAt: nowIso() };
+    });
+    await persist();
+    toast('Kadro değerleri kaydedildi.');
+  };
+  return wrap;
+}
+
+// ---------- DASHBOARD ----------
+function renderDashboard(){
+  const lg = state.current;
+  const c = state.computed;
+  const wrap = el(`<div></div>`);
+  if (!lg.teams.length) { wrap.appendChild(el(`<div class="card"><div class="empty">Önce Lig Kurulumu sekmesinden takım ekle.</div></div>`)); return wrap; }
+
+  const summary = el(`
+    <div class="card">
+      <h2>Takım karşılaştırma</h2>
+      <div class="sub">Güncel bütçe, kadro değeri ve maksimum teklif kapasitesi</div>
+      <div style="overflow-x:auto;">
+        <table class="data" id="dash-table">
+          <thead><tr><th>Takım</th><th class="amt">Bütçe</th><th class="amt">Kadro Değeri</th><th class="amt">Maks. Teklif <span class="warn-mark" title="Kadro değerleri güncel değilse bu hesap yanlış olur">⚠</span></th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  `);
+  wrap.appendChild(summary);
+  const tbody = summary.querySelector('tbody');
+  const sqDate = t => { const u = lg.squadValues && lg.squadValues[t] && lg.squadValues[t].updatedAt; return u ? new Date(u).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''; };
+  const rows = lg.teams.map(t => ({ t, budget: c.budgets[t]||0, squad: c.squadValues[t]||0, max: c.maxBid[t]||0, updated: sqDate(t) }))
+    .sort((a,b) => b.max - a.max);
+  rows.forEach(r => {
+    const negative = r.budget < 0;
+    const tr = el(`<tr>
+      <td>${escapeHtml(r.t)}</td>
+      <td class="amt num ${negative?'neg':''}">${fmt(r.budget)}</td>
+      <td class="amt num">${r.squad ? fmt(r.squad) : '<span class="neg small">girilmemiş</span>'}${r.updated ? `<div class="small muted">${r.updated}</div>` : ''}</td>
+      <td class="amt num" style="font-weight:700;">${fmt(r.max)}</td>
+      <td>${negative ? '<span class="pill warn">EKSİ BÜTÇE</span>' : ''}</td>
+    </tr>`);
+    tr.style.cursor = 'pointer';
+    tr.onclick = () => openTeamDetail(r.t);
+    tbody.appendChild(tr);
+  });
+
+  if (lg.negativeBudgetRule > 0) {
+    const stamps = lg.teams.map(t => lg.squadValues && lg.squadValues[t] && lg.squadValues[t].updatedAt).filter(Boolean).sort();
+    const missing = lg.teams.filter(t => !(lg.squadValues && lg.squadValues[t] && lg.squadValues[t].value));
+    const oldest = stamps.length ? new Date(stamps[0]).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null;
+    const card = el(`<div class="card warn-card">
+      <strong>⚠ Maks. teklif kadro değerine bağlı:</strong> Maksimum teklif = mevcut bütçe + kadro değerinin %25'i (takımın eksiye düşebileceği en fazla tutar). Yani sisteme işlenmiş kadro değeri doğrudan hesaba girer. Kadro değerleri oyunda sürekli değiştiği için en güncel değerler işlenmezse maksimum teklif yanlış hesaplanır.
+      <div class="small" style="margin-top:6px;">${missing.length ? `Kadro değeri girilmemiş takım: <strong>${missing.map(escapeHtml).join(', ')}</strong>. ` : ''}${oldest ? `En eski güncelleme: <strong>${oldest}</strong>.` : ''}</div>
+      <button class="go-squad" style="margin-top:10px;">Kadro değerlerini güncelle</button>
+    </div>`);
+    card.querySelector('.go-squad').onclick = () => { state.tab = 'kadro'; render(); };
+    wrap.appendChild(card);
+  }
+
+  if (lg.zeroPointsIfNegative && rows.some(r => r.budget < 0)) {
+    wrap.appendChild(el(`<div class="card" style="border-color:var(--danger);background:var(--danger-bg);">
+      <strong style="color:var(--danger);">⚠ Uyarı:</strong> Eksi bütçedeki takım(lar), haftanın ilk maçı başladığında bütçe hâlâ eksideyse o hafta 0 puan alma riskiyle karşı karşıya.
+    </div>`));
+  }
+
+  const exportCard = el(`<div class="card"><h2>Dışa Aktar</h2><div class="sub">Tüm bütçe hareketlerini CSV olarak indir.</div><button id="export-csv" ${downloadsCap?'':'disabled'}>${downloadsCap?'CSV İndir':'İndirme desteklenmiyor'}</button></div>`);
+  wrap.appendChild(exportCard);
+  const exportBtn = exportCard.querySelector('#export-csv');
+  if (downloadsCap) exportBtn.onclick = async () => {
+    let csv = 'Takim,Kategori,Aciklama,Tutar,CalismaBakiyesi\n';
+    lg.teams.forEach(t => {
+      (c.ledger[t]||[]).forEach(e => {
+        csv += `"${t}","${e.type}","${(e.label||'').replace(/"/g,'""')}",${e.amount},${e.runningBalance}\n`;
+      });
+    });
+    try {
+      await downloadsCap.save({ filename: `${lg.name.replace(/[^a-z0-9]+/gi,'_')}_butce.csv`, data: '\ufeff' + csv });
+    } catch(e){ toast('İndirme iptal edildi veya başarısız.'); }
+  };
+
+  return wrap;
+}
+
+function openTeamDetail(team){
+  const lg = state.current;
+  const c = state.computed;
+  const overlay = el(`<div class="overlay"></div>`);
+  const entries = c.ledger[team] || [];
+  const modal = el(`
+    <div class="modal">
+      <h3>${escapeHtml(team)} — Bütçe Geçmişi</h3>
+      <div style="overflow-x:auto;">
+        <table class="data">
+          <thead><tr><th>Kalem</th><th class="amt">Etki</th><th class="amt">Bakiye</th></tr></thead>
+          <tbody>
+            ${entries.map(e => `<tr>
+              <td>${escapeHtml(e.label)}</td>
+              <td class="amt num ${e.amount<0?'neg':'pos'}">${e.amount>=0?'+':''}${fmt(e.amount)}</td>
+              <td class="amt num" style="font-weight:600;">${fmt(e.runningBalance)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="row" style="margin-top:16px;">
+        <div style="flex:1;"></div>
+        <button id="close-detail" class="primary" style="flex:0 0 auto;">Kapat</button>
+      </div>
+    </div>
+  `);
+  modal.querySelector('#close-detail').onclick = () => overlay.remove();
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+}
+
+boot();
+})();
+</script>
+</body>
+</html>
